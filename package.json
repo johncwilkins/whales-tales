@@ -1,0 +1,10 @@
+{
+  "name": "whales-tales",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/game.mjs && node tests/speech.mjs && node tests/timing-callouts.mjs && node tests/avatars.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
