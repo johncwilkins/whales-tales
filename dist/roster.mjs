@@ -1,0 +1,21 @@
+export const CHARACTERS={
+ wargo:{id:'wargo',name:'Wargo',description:'Gray hair, black sunglasses, burgundy tee, khaki shorts',shirt:'#722c3d',skin:'#d5a085',hair:'#777b78'},
+ pekalsky:{id:'pekalsky',name:'Pekalsky',description:'Thick dark hair, green Squam Lakes sweatshirt, blue jeans',shirt:'#405549',skin:'#cca081',hair:'#302a25'},
+ saunders:{id:'saunders',name:'Saunders',description:'Blue C baseball cap, beige Henley, coral shorts',shirt:'#bcb39e',skin:'#c79a78',hair:'#5e4835'},
+ rose:{id:'rose',name:'Rose',description:'Red baseball cap, broad smile, black polo, khaki shorts',shirt:'#1f2829',skin:'#d4a08a',hair:'#74746b'},
+ martens:{id:'martens',name:'Martens',description:'Sandy brown hair, black sunglasses, red Nantucket tee, light shorts',shirt:'#ad575a',skin:'#d8ab90',hair:'#8d785b'},
+ rueben:{id:'rueben',name:'Rueben',description:'Full dark hair, white-framed sunglasses, white graphic tee',shirt:'#f0eee3',skin:'#b88768',hair:'#2f2624'},
+ colman:{id:'colman',name:'Colman',description:'Swept-up salt-and-pepper hair, burgundy polo, dark jeans',shirt:'#682f42',skin:'#d3aa91',hair:'#7b7e75'},
+ recker:{id:'recker',name:'Recker',description:'Blue C baseball cap, black sunglasses, pale shirt',shirt:'#b9b2a1',skin:'#c79b7d',hair:'#4f3e31'},
+ att:{id:'att',name:'Att',description:'Close dark hair, dark goatee, black sunglasses, red shirt',shirt:'#a92f3a',skin:'#b78768',hair:'#2b2420'},
+ wilkins:{id:'wilkins',name:'Wilkins',description:'Tousled silver-gray hair, open smile, navy tee, khaki trousers',shirt:'#18212c',skin:'#d2a18a',hair:'#9b9c90'},
+ graham:{id:'graham',name:'Graham',description:'Blue T baseball cap, black sunglasses, navy graphic tee, teal shorts',shirt:'#1e324b',skin:'#c29578',hair:'#6c6e64'},
+ lefko:{id:'lefko',name:'Lefko',description:'Red baseball cap, thin metal glasses, gray-blue tee, khaki shorts',shirt:'#75949f',skin:'#d2a58d',hair:'#8a8b83'},
+ levitt:{id:'levitt',name:'Levitt',description:'Salt-and-pepper spiked hair, sunglasses on head, gray graphic tee',shirt:'#999ea2',skin:'#c49b86',hair:'#737873'},
+ heard:{id:'heard',name:'Heard',description:'Balding head, black sunglasses, bright blue long-sleeve shirt',shirt:'#2396bd',skin:'#c58e73',hair:'#63564e'},
+ dauenheimer:{id:'dauenheimer',name:'Dauenheimer',description:'Receding dark hair, full salt-and-pepper beard, charcoal Coast Guard Park tee, dark shorts',shirt:'#343c3d',skin:'#c79576',hair:'#4c4843'},
+ patty_prom:{id:'patty_prom',name:'Patty Prom',description:'Shoulder-length curly brown hair, gold hoops, navy top, white lei',shirt:'#172331',skin:'#cc9e7f',hair:'#806448'}
+};
+export const seatCast=['house','wargo','pekalsky','saunders','rose','martens','rueben','patty_prom','house'];
+export const HOUSE_NAMES=['You','Maggie','Jack','Rosa','Eddie','June','Finn','Bea','Lou'];
+export function assignCharacter(cast,seat,id){if(id!=='house'&&!CHARACTERS[id])return;for(let i=1;i<cast.length;i++)if(i!==seat&&id!=='house'&&cast[i]===id)cast[i]='house';cast[seat]=id}
