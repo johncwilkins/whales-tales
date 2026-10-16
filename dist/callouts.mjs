@@ -4,7 +4,11 @@ const ordinary=[
  'Nice try. That one’s yours!',
  'Caught you! Cup up.',
  'You’ve lost the plot. Take a sip!',
- 'Objection! That’s your drink.'
+ 'Objection! That’s your drink.',
+ 'Hold it! A bold strategy, being completely wrong.',
+ 'That’s on you! We appreciate the confidence.',
+ 'Wrong turn! You’ve navigated straight into a drink.',
+ 'Cup up! You’ve been defeated by single digits.'
 ];
 const peep=[
  'Peepage! That Nay wasn’t yours.',
@@ -14,7 +18,13 @@ const peep=[
  'Peepage! Save some Nay for the rest of us.',
  'Peepage! An excellent answer to somebody else’s question.',
  'Peepage! Your enthusiasm has earned you a drink.',
- 'Peepage! Thanks for volunteering. Cup up.'
+ 'Peepage! Thanks for volunteering. Cup up.',
+ 'Peepage! All mouth, no invitation.',
+ 'Peepage! You’re not the main character of this number.',
+ 'Peepage! We’ll call you when we need the commentary.',
+ 'Peepage! Your chair was minding its own business.',
+ 'Peepage! We found the table’s unsolicited spokesperson.',
+ 'Peepage! That answer came from the cheap seats.'
 ];
 const silence=[
  'Silence! Drink and start.',
@@ -24,7 +34,13 @@ const silence=[
  'Silence! That chair came with a speaking part.',
  'Silence! We ordered a Nay, not a moment of reflection.',
  'Silence! The empty chair’s putting in more effort.',
- 'Silence! Your turn wasn’t a suggestion. Drink and start.'
+ 'Silence! Your turn wasn’t a suggestion. Drink and start.',
+ 'Silence! Somebody check if that chair has a pulse.',
+ 'Silence! You’ve been out-talked by the furniture.',
+ 'Silence! We can hear the number rolling around in there.',
+ 'Silence! Your Nay appears to be on back order.',
+ 'Silence! Are you buffering or just decorative?',
+ 'Silence! That was your cue, not a sightseeing opportunity.'
 ];
 const quick=['Quick Who! Let them say Nay first.','Quick Who! Jumped the gun. Cup up.','Quick Who! Easy there. That’s your drink.'];
 const slow=[
@@ -35,7 +51,25 @@ const slow=[
  'Sundial tails! Even the beer’s getting impatient.',
  'Sundial tails! Did you send that number by mail?',
  'Sundial tails! The ice caps moved faster.',
- 'Sundial tails! Should we come back after breakfast?'
+ 'Sundial tails! Should we come back after breakfast?',
+ 'Sundial tails! Your answer’s arrived by sailboat.',
+ 'Sundial tails! We’ve aged out of this conversation.',
+ 'Sundial tails! The committee can stop deliberating now.',
+ 'Sundial tails! Even the closet light’s lost interest.'
+];
+const wrong=[
+ 'Wrong word! Right mouth, wrong script.',
+ 'Wrong word! There are only three things to say. Impressive.',
+ 'Wrong word! The answer was hiding in the instructions.',
+ 'Wrong word! The vocabulary was limited for a reason.',
+ 'Wrong word! A strong entry in the wrong competition.',
+ 'Wrong word! That wasn’t one of the options.',
+ 'Wrong word! You had one syllable to work with.',
+ 'Wrong word! The chair understood the assignment better.',
+ 'Wrong word! Close, if we were playing a different game.',
+ 'Wrong word! Try listening with the ears next time.',
+ 'Wrong word! Your brain called the wrong department.',
+ 'Wrong word! We’re going to need a smaller instruction manual.'
 ];
 const flag=[
  'For God’s sake, get his number!',
@@ -66,8 +100,8 @@ function choose(kind,pool,previous,random){
  remaining.set(kind,bag.filter(s=>s!==line));recent.set(kind,[...history,line].slice(-Math.min(3,pool.length-1)));return line;
 }
 export function pickCallout(reason,name='',previous='',random=Math.random){
- const kind=/peepage/i.test(reason)?'peep':/silence/i.test(reason)?'silence':/quick who/i.test(reason)?'quick':/sundial|time|slow|hesitat/i.test(reason)?'slow':'ordinary';
+ const kind=/peepage/i.test(reason)?'peep':/silence/i.test(reason)?'silence':/quick who/i.test(reason)?'quick':/sundial|time|slow|hesitat/i.test(reason)?'slow':/said |wrong word|wrong reply/i.test(reason)?'wrong':'ordinary';
  const prefix=name?name+'! ':'';
- return prefix+choose(kind,{peep,silence,quick,slow,ordinary}[kind],previous.startsWith(prefix)?previous.slice(prefix.length):previous,random);
+ return prefix+choose(kind,{peep,silence,quick,slow,wrong,ordinary}[kind],previous.startsWith(prefix)?previous.slice(prefix.length):previous,random);
 }
 export function pickCeremonyCallout(kind,random=Math.random){return choose(kind,kind==='flag'?flag:chug,'',random)}

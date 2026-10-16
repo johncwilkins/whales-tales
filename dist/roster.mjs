@@ -1,5 +1,5 @@
 export const CHARACTERS={
- wargo:{id:'wargo',name:'Wargo',description:'Gray hair, black sunglasses, burgundy tee, khaki shorts',shirt:'#722c3d',skin:'#d5a085',hair:'#777b78'},
+ wargo:{id:'wargo',name:'Wargo',description:'Floppy olive outback hat, gray hair, black sunglasses, burgundy tee, khaki shorts',shirt:'#722c3d',skin:'#d5a085',hair:'#777b78'},
  pekalsky:{id:'pekalsky',name:'Pekalsky',description:'Thick dark hair, green Squam Lakes sweatshirt, blue jeans',shirt:'#405549',skin:'#cca081',hair:'#302a25'},
  saunders:{id:'saunders',name:'Saunders',description:'Blue C baseball cap, beige Henley, coral shorts',shirt:'#bcb39e',skin:'#c79a78',hair:'#5e4835'},
  rose:{id:'rose',name:'Rose',description:'Red baseball cap, broad smile, black polo, khaki shorts',shirt:'#1f2829',skin:'#d4a08a',hair:'#74746b'},
@@ -14,6 +14,8 @@ export const CHARACTERS={
  levitt:{id:'levitt',name:'Levitt',description:'Salt-and-pepper spiked hair, sunglasses on head, gray graphic tee',shirt:'#999ea2',skin:'#c49b86',hair:'#737873'},
  heard:{id:'heard',name:'Heard',description:'Balding head, black sunglasses, bright blue long-sleeve shirt',shirt:'#2396bd',skin:'#c58e73',hair:'#63564e'},
  dauenheimer:{id:'dauenheimer',name:'Dauenheimer',description:'Receding dark hair, full salt-and-pepper beard, charcoal Coast Guard Park tee, dark shorts',shirt:'#343c3d',skin:'#c79576',hair:'#4c4843'},
+ watson:{id:'watson',name:'Watson',description:'Skinny build, brown hair, charcoal West Point Army shirt',shirt:'#252729',skin:'#d4ab8d',hair:'#654634'},
+ rooks:{id:'rooks',name:'Rooks',description:'Short and stout barbecue chef, sandy-blond hair, red-check shirt and dark apron',shirt:'#a65b42',skin:'#d1a286',hair:'#b39a6c'},
  patty_prom:{id:'patty_prom',name:'Patty Prom',description:'Shoulder-length curly brown hair, gold hoops, navy top, white lei',shirt:'#172331',skin:'#cc9e7f',hair:'#806448'}
 };
 export const seatCast=['house','wargo','pekalsky','saunders','rose','martens','rueben','patty_prom','house'];

@@ -21,7 +21,7 @@ const voices=()=>('speechSynthesis' in window?speechSynthesis.getVoices():[]);
 function refreshVoices(){const select=$('#voice'),chosen=desiredVoice;select.replaceChildren();const auto=document.createElement('option');auto.value='auto';auto.textContent=mobileDevice()?'Auto · clearest mobile voice':'Auto · best available';select.append(auto);for(const v of rankVoices(voices())){const option=document.createElement('option');option.value=v.voiceURI||v.name;option.textContent=v.name;select.append(option)}select.value=chosen;if(!select.value)select.value='auto'}
 refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?.('voiceschanged',refreshVoices);
 
-const options={easy:{delay:300,limit:0,rate:1.15,botMiss:.015},normal:{delay:120,limit:9000,rate:1.35,botMiss:.025},fast:{delay:50,limit:4500,rate:1.6,botMiss:.04}};
+const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
 const pace=()=>options[$('#pace').value];
 let modeId='regular',direction=1,nextSpecial=1+specialGap(),numberDraft='',numberTimer=0,botPending=null,humanPending=null;
 let nextChatter=chatterGap(),lastChatter=-1;
@@ -55,7 +55,7 @@ function renderPongCast(){for(const [j,id] of ['#pong-left','#pong-right'].entri
 renderPongCast();
 
 const keypad=$('#keypad');for(let n=1;n<=18;n++){const b=document.createElement('button');b.className='response';b.dataset.value=n;b.textContent=n;b.setAttribute('aria-label','Call '+n);keypad.append(b)}
-function buttons(){document.querySelectorAll('.response').forEach(b=>b.disabled=!running||paused||state.phase==='restart'||(Number(b.dataset.value)>maxCall()));$('#players').disabled=false;$('#pause').disabled=!running;$('#pause').textContent=paused?'▶ Resume':'Ⅱ Pause';$('#self-num').textContent=count;$('#mobile-start').hidden=running;$('#settings-toggle').disabled=running&&(state.phase==='restart'||peepBusy);}
+function buttons(){document.querySelectorAll('.response').forEach(b=>b.disabled=!running||paused||state.phase==='restart'||(Number(b.dataset.value)>maxCall()));$('#players').disabled=false;$('#pause').disabled=!running;$('#pause').textContent=paused?'▶ Resume':'Ⅱ Pause';$('#self-num').textContent=count;$('#mobile-start').hidden=running;$('#settings-toggle').disabled=false;}
 function advance(value){const numberCall=state.phase==='number';if(numberCall&&introOpen){introOpen=false;introRevision++;announcementState=null;$('#toast').hidden=true;setCeremony(-1);}if(state.phase==='nay'){pendingPeepers.clear();paidPeepers.clear();}state=nextStep(state,value,count,away,mode());if(numberCall&&modeId==='oscillating')direction*=-1;turns++;renderMode();}
 function stats(){$('#passes').textContent=passes;$('#mistakes').textContent=mistakes;$('#round').textContent=round}
 function status(tag,title,detail){$('#status-tag').textContent=tag;$('#prompt').textContent=title;$('#detail').textContent=detail}
@@ -72,8 +72,8 @@ async function say(i,text,myToken,{opening=false,ceremony=false,selfCall=false,o
 }
 
 function stop(){introOpen=false;introRevision++;announcementState=null;releasePause();humanSince=null;pressure=null;clearNumberDraft();botPending=null;humanPending=null;activeSpeaker=-1;peepBusy=false;token++;speechSerial++;running=false;paused=false;waiting=false;cancelAnimationFrame(frame);$('#timer-fill').style.width='0';speechChannel?.cancel();clearBubble();setActive(-1);setCeremony(-1);buttons()}
-function humanTurn(myToken){if(humanPending===state&&waiting)return;humanPending=state;humanSince=performance.now();waiting=true;buttons();const duration=MODES[modeId].olympic?({easy:2500,normal:1800,fast:1300}[$('#pace').value]):pace().limit;const deadline=performance.now()+duration,turn=state;function tick(){if(myToken!==token||!waiting||paused||state!==turn||humanPending!==turn)return;if(duration){const left=deadline-performance.now();$('#timer-fill').style.width=Math.max(0,left/duration*100)+'%';if(left<=0){fail(0,state.phase==='nay'?'Silence! No Nay.':MODES[modeId].olympic?'Sundial tails! Olympic numbers must be quick.':'Time’s up.');return}}frame=requestAnimationFrame(tick)}tick()}
-const goldenReasons=['Off to the bathroom.','I have to blow.','Got to call my girlfriend.'];let lastGoldenReason=goldenReasons[2];
+function humanTurn(myToken){if(humanPending===state&&waiting)return;humanPending=state;humanSince=performance.now();waiting=true;buttons();const duration=MODES[modeId].olympic?({easy:1800,normal:1300,fast:1000,blitz:750}[$('#pace').value]):pace().limit;const deadline=performance.now()+duration,turn=state;function tick(){if(myToken!==token||!waiting||paused||state!==turn||humanPending!==turn)return;if(duration){const left=deadline-performance.now();$('#timer-fill').style.width=Math.max(0,left/duration*100)+'%';if(left<=0){fail(0,state.phase==='nay'?'Silence! No Nay.':MODES[modeId].olympic?'Sundial tails! Olympic numbers must be quick.':'Time’s up.');return}}frame=requestAnimationFrame(tick)}tick()}
+const goldenReasons=['Off to the bathroom.','I have to blow.','Got to call my girlfriend.','My bladder just called a meeting.','Going to see a man about a urinal.','The beer has reached its final destination.','Need to go drain the holding tank.','My kidneys have filed a complaint.','Got to return this rental beer.','My girlfriend wants proof I’m still alive.','Going to check if the bathroom has a better counting game.','Nature just sent a second reminder.','I need a minute with the porcelain committee.','Taking this beer on its final voyage.','The downstairs department needs immediate attention.','Got to go negotiate with my bladder.'];let lastGoldenReason=goldenReasons[2];
 async function bathroomBeat(myToken){
  if(state.phase!=='restart')return true;
  const before=state;
@@ -194,7 +194,7 @@ function applyKeyboardLayout(){ $('#keyboard-layout').value=keyboardLayout;$('#n
 applyKeyboardLayout();
 $('#keyboard-layout').onchange=()=>{keyboardLayout=$('#keyboard-layout').value==='as'?'as':'space-arrow';try{localStorage.setItem('whales-keyboard-layout',keyboardLayout)}catch{}$('#keyboard-layout').blur();applyKeyboardLayout();if(running&&!paused&&!peepBusy&&state.phase!=='restart')updatePrompt();};
 let settingsPaused=false;
-$('#settings-toggle').onclick=()=>{settingsPaused=running&&!paused&&state.phase!=='restart'&&!peepBusy;if(settingsPaused)$('#pause').click();$('#configuration').showModal();};
+$('#settings-toggle').onclick=()=>{settingsPaused=running&&!paused;if(settingsPaused)$('#pause').click();$('#configuration').showModal();};
 function closeSettings(){speechChannel?.cancel();$('#configuration').close();if(settingsPaused&&running&&paused)$('#pause').click();settingsPaused=false;}
 $('#close-configuration').onclick=closeSettings;$('#configuration').addEventListener('cancel',e=>{e.preventDefault();closeSettings()});
 $('#table-toggle').onclick=()=>{const showing=document.body.classList.toggle('mobile-table');$('#table-toggle').textContent=showing?'Controls only':'Show table';$('#table-toggle').setAttribute('aria-pressed',String(showing));};
