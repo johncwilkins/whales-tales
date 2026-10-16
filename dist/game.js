@@ -5,7 +5,7 @@ import {chatterGap,chooseChatter} from './chatter.mjs';
 import {responseDelay} from './timing.mjs';
 import {pickCallout,pickCeremonyCallout} from './callouts.mjs';
 import {unlockSound,setSoundEnabled,playCue} from './sound.js';
-import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,setPongPlayers} from './scene.js';
+import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,setPongPlayers,refereeSafety} from './scene.js';
 import {MODES,chooseAlternate,specialGap,modeAnnouncement} from './modes.mjs';
 import {nextStep,validResponse,penaltyFor,keyResponse} from './rules.mjs';
 const $=s=>document.querySelector(s);let count=6,state={actor:0,caller:0,target:0,phase:'number'},running=false,paused=false,muted=false,waiting=false,token=0,passes=0,mistakes=0,round=1,frame=0,started=false,lastLoser=-1,lossStreak=0,speechSerial=0,away=-1,turns=0,bathroomAt=3,returnAt=0,lastCallout='',activeSpeaker=-1,peepBusy=false;
@@ -13,6 +13,7 @@ let keyboardLayout='as';try{const saved=localStorage.getItem('whales-keyboard-la
 const mobileDevice=()=>typeof window.matchMedia==='function'&&window.matchMedia('(max-width:1000px)').matches;
 let desiredVoice='auto';try{desiredVoice=localStorage.getItem('whales-voice')||'auto'}catch{}
 const pendingPeepers=new Set(),paidPeepers=new Set(),pauseWaiters=new Set();
+let mistakeEvents=0;function reactToMistake(){if(++mistakeEvents%3===0)refereeSafety()}
 let humanSince=null,quickPoints=0,pressure=null,pauseSnapshot=null,announcementState=null,introOpen=false,introRevision=0;
 function untilResumed(){return paused&&running?new Promise(resolve=>pauseWaiters.add(resolve)):Promise.resolve()}
 function releasePause(){for(const resolve of pauseWaiters)resolve();pauseWaiters.clear();}
@@ -113,7 +114,7 @@ async function pump(myToken,{openingNumber=false}={}){if(myToken!==token||!runni
  if(myToken===token&&running&&!paused&&state===next&&state.actor!==0)pump(myToken);
 }
 
-function fail(loser,reason){const peepers=[...pendingPeepers];for(const peeper of peepers)if(!paidPeepers.has(peeper))playerDrinks(peeper,{});pendingPeepers.clear();paidPeepers.clear();const expected=/quick who/i.test(reason)?'the other player’s Nay before your Who':loser===0&&state.actor!==0?'to wait for your turn':state.phase==='number'?`a number from 1 to ${maxCall()}`:state.phase==='nay'?'Nay':'Who';const p=penaltyFor(lastLoser,lossStreak,loser);lastLoser=p.lastLoser;lossStreak=p.streak;clearFlags();if(loser===0)mistakes++;round++;stats();stop();running=true;
+function fail(loser,reason){const peepers=[...pendingPeepers];for(const peeper of peepers)if(!paidPeepers.has(peeper))playerDrinks(peeper,{});pendingPeepers.clear();paidPeepers.clear();const expected=/quick who/i.test(reason)?'the other player’s Nay before your Who':loser===0&&state.actor!==0?'to wait for your turn':state.phase==='number'?`a number from 1 to ${maxCall()}`:state.phase==='nay'?'Nay':'Who';const p=penaltyFor(lastLoser,lossStreak,loser);lastLoser=p.lastLoser;lossStreak=p.streak;clearFlags();if(loser===0)mistakes++;round++;stats();stop();running=true;reactToMistake();
  const name=people[loser].name,callout=pickCallout(reason,loser===0?'':name,lastCallout);lastCallout=callout;state={actor:loser,caller:loser,target:loser,phase:'restart',penalty:p,reason,expected,callout,peepers};
  status(p.chug?'THREE LOSSES · CHUG':p.flag?'TWO LOSSES · FLAG':'SLIP-UP · TAKE A SIP',callout,`${reason} Expected ${expected}. ${p.chug?'Chug, then restart.':p.flag?'Flag and crushed cup earned.':'Take a sip.'} ${loser===0?'You open':name+' opens'} the next round.`);
  const toast=$('#toast');toast.hidden=false;toast.replaceChildren();const title=document.createElement('b');title.textContent=callout;toast.dataset.kind='mistake';toast.append(title,document.createTextNode(`${reason} Expected ${expected}.${peepers.length?' '+peepers.map(i=>people[i].name).join(', ')+' also drank for peepage.'+(/silence/i.test(reason)?' The silent player restarts.':''):''}`));buttons();pump(token)
@@ -151,7 +152,7 @@ async function restartLoser(myToken){
 
 async function registerPeep(peeper){
  if(peepBusy||pendingPeepers.has(peeper))return;
- pendingPeepers.add(peeper);if(peeper===0)mistakes++;stats();
+ pendingPeepers.add(peeper);if(peeper===0)mistakes++;stats();reactToMistake();
  token++;botPending=null;humanPending=null;const myToken=token;peepBusy=true;waiting=false;buttons();speechChannel?.cancel();cancelAnimationFrame(frame);
  const expectedActor=state.actor,shouter=people.map((_,i)=>i).find(i=>i!==peeper&&i!==away&&i!==expectedActor)??expectedActor;
  setCeremony(peeper,'mistake');playCue('mistake');status('PEEPAGE','That Nay wasn’t yours.',`${people[peeper].name} drinks. ${people[expectedActor].name} still owes a Nay.`);
