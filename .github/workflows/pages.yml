@@ -1,0 +1,38 @@
+name: Publish Whale's Tales
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # Visibility must be changed explicitly before the public site can deploy.
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+      - name: Check the game
+        run: npm test
+      - name: Set up Pages
+        uses: actions/configure-pages@v5
+      - name: Package the static game
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Publish the game
+        id: deployment
+        uses: actions/deploy-pages@v4
