@@ -65,6 +65,8 @@ Three.js 0.169.0 is vendored under its MIT license; see `dist/vendor/THREE-LICEN
 
 Settings remains available throughout ceremonies and peepage and pauses/resumes safely. Ordinary reply limits are Easygoing 9 seconds (former Regular), Regular 4.5 seconds (former Quick), Quick 3 seconds and Real Quick 1.8 seconds. Added more golden-chair excuses, wrong-word/silence/peepage heckles, Les chatter, Watson in a West Point shirt, barbecue chef Rooks, Wargo’s floppy olive outback hat, two central beer pitchers, a Mr. Beams closet light and small table props.
 
+When Saunders is seated and present, every third mistake (including non-ending peepage) triggers a brief NFL safety pose with both hands together overhead. The pose blends back to his resting arms.
+
 ## GitHub Pages
 
-The Pages workflow tests and publishes `dist/` on pushes to `main` or when run manually. It intentionally skips deployment while the repository is private. After changing the repository to public, select **Settings → Pages → Source: GitHub Actions**, then run **Publish Whale's Tales** from Actions. No build or package installation is needed.
+The Pages workflow tests and publishes `dist/` on pushes to `main` or when run manually. It intentionally skips deployment while the repository is private. After changing the repository to public, select **Settings → Pages → Source: GitHub Actions**, then run **Publish Whale's Tales** from Actions.
