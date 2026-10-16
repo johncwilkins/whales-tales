@@ -1,0 +1,113 @@
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url));
+import fs from 'node:fs';import assert from 'node:assert/strict';
+import {nextStep,keyResponse} from '../dist/rules.mjs';
+const elements=new Map(),listeners={},responses=[],events=[];
+const classes=()=>({toggle(){},add(){},remove(){}});
+function el(id){if(!elements.has(id))elements.set(id,{id,classList:classes(),value:id==='#players'?'6':id==='#pace'?'normal':'',checked:true,style:{},dataset:{},textContent:'',hidden:false,disabled:false,open:false,append(c){if(id==='#keypad')responses.push(c)},setAttribute(){},addEventListener(){},replaceChildren(){},click(){this.onclick?.()},blur(){},showModal(){this.open=true},close(){this.open=false}});return elements.get(id)}
+globalThis.document={body:{classList:classes()},hidden:false,createTextNode:text=>({text}),querySelector:el,querySelectorAll:selector=>selector.startsWith('#keypad')?responses.filter(b=>Number(b.dataset.value)):responses,createElement:()=>({classList:classes(),dataset:{},setAttribute(){},append(){},replaceChildren(){}}),addEventListener:(event,fn)=>listeners[event]=fn};
+let current,clock=0,timerId=0;const timers=new Map(),utterances=[];globalThis.performance={now:()=>clock};
+globalThis.window={speechSynthesis:{getVoices:()=>[],cancel(){if(current){const u=current;current=null;u.onerror?.()}},speak(u){current=u;utterances.push(u);events.push('say:'+u.text)}}};globalThis.speechSynthesis=window.speechSynthesis;globalThis.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};
+globalThis.requestAnimationFrame=()=>1;globalThis.cancelAnimationFrame=()=>{};
+globalThis.setTimeout=(fn,ms)=>{timers.set(++timerId,{fn,due:clock+ms,ms});return timerId};globalThis.clearTimeout=id=>timers.delete(id);
+globalThis.sceneMock={people:Array.from({length:6},(_,i)=>({name:i?'Bot '+i:'You'})),seatPlayers(){},setActive(){},showBubble(){},clearBubble(){},changeView(){},setTalking(){},setCeremony(){},setPongPlayers(){},setBubblesEnabled(on){sceneMock.bubbles=on},setAway(i,on){events.push('away:'+i+':'+on)},playerDrinks(i,p){events.push('drink:'+i+':'+(p.chug?'chug':'sip'));if(p.flag)sceneMock.flagged=i},clearFlags(){sceneMock.flagged=null;events.push('clearFlags')}};
+globalThis.soundMock={unlockSound(){},setSoundEnabled(on){events.push('sound:'+on)},playCue:k=>events.push('cue:'+k)};
+globalThis.MockSpeechChannel=class{constructor(native){this.native=native;this.done=null}resume(){}cancel(){if(this.done){const done=this.done;this.done=null;done()}this.native.cancel()}speak(text,opts){this.cancel();return new Promise(resolve=>{this.done=resolve;const u=new SpeechSynthesisUtterance(text);Object.assign(u,opts);u.onend=u.onerror=()=>{if(this.done===resolve)this.done=null;resolve()};this.native.speak(u);if(!globalThis.delayStart)u.onStart?.()})}};
+
+const code=fs.readFileSync(root+'dist/game.js','utf8').replace(/^import (.*) from '.\/scene.js';/m,'const $1=globalThis.sceneMock;').replace(/^import (.*) from '.\/sound.js';/m,'const $1=globalThis.soundMock;').replace(/^import .* from '.\/speech.mjs';/m,'const SpeechChannel=globalThis.MockSpeechChannel;').replace(/'\.\/([a-z]+\.mjs)'/g,"'file://"+root+"dist/$1'");
+const expose=`\nglobalThis.control={fail,getState:()=>state,getNextChatter:()=>nextChatter,chatter:()=>chatterBeat(token),openHuman(){stop();state={phase:'number',actor:0,caller:0,target:0};running=true;modeId='regular';direction=1;introOpen=true;announceOpening(0,'Whale’s Tales, calls tales on…',token)},isIntroOpen:()=>introOpen,getMode:()=>({id:modeId,direction}),setMode(id){modeId=id;direction=MODES[id].direction;renderMode()},respond,advance,nextMode:selectRoundMode,setRound(n){round=n},getNextSpecial:()=>nextSpecial,getPressure:()=>pressure,getQuickPoints:()=>quickPoints,getPending:()=>[...pendingPeepers],peeping:()=>peepBusy,force(s,absent=-1){stop();pendingPeepers.clear();paidPeepers.clear();away=absent;state=s;running=true;paused=false;bathroomAt=1e6;updatePrompt();buttons()},pump:()=>pump(token)};`;
+await import('data:text/javascript;base64,'+Buffer.from(code+expose).toString('base64'));
+const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve()};
+const key=key=>listeners.keydown({key,repeat:false,target:{tagName:'BODY'},preventDefault(){}});
+async function endVoice(){if(current){const u=current;current=null;clock+=350;u.onend?.()}await flush()}
+async function nextTimer(){const e=[...timers.entries()].sort((a,b)=>a[1].due-b[1].due)[0];assert(e,'Pending timer expected');timers.delete(e[0]);clock=Math.max(clock,e[1].due);e[1].fn();await flush()}
+async function finishCeremony(){for(let i=0;i<100&&control.getState().phase==='restart';i++){if(current)await endVoice();else await nextTimer()}assert.notEqual(control.getState().phase,'restart')}
+
+assert.equal(keyResponse('ArrowDown'),'who');assert.equal(keyResponse('b'),null);assert.equal(keyResponse('B'),null);
+control.force({actor:0,caller:0,target:0,phase:'number'},2);
+key('2');assert.equal(control.getState().actor,0);assert.equal(control.getState().goldenChair,2);key(' ');key('ArrowDown');assert.equal(control.getState().numberOrigin,2);assert(el('#count-origin').textContent.includes('empty chair'));key('1');assert.equal(control.getState().actor,3);assert.equal(control.getState().countOrigin,2);
+// Cover every caller/empty chair/next number combination, preserving the origin.
+for(let n=2;n<=9;n++)for(let caller=0;caller<n;caller++)for(let absent=0;absent<n;absent++)if(caller!==absent){let s=nextStep({phase:'number',actor:caller},(absent-caller+n)%n,n,absent);s=nextStep(s,'nay',n,absent);s=nextStep(s,'who',n,absent);assert.equal(s.numberOrigin,absent);for(let value=1;value<=n;value++){const after=nextStep(s,value,n,absent);const target=(absent+value)%n;assert.equal(after.actor,target===absent?caller:target)}}
+// An out-of-turn Nay is a non-ending peep. The correct player still owes Nay.
+control.force({phase:'nay',actor:3,caller:2,target:3,goldenChair:-1});const roundBefore=el('#round').textContent,drinkBefore=events.filter(e=>e.startsWith('drink:')).length;
+key(' ');assert(control.peeping());assert.equal(control.getState().actor,3);assert.equal(control.getState().phase,'nay');assert.deepEqual(control.getPending(),[0]);assert.equal(el('#round').textContent,roundBefore);
+const peepMistakes=el('#mistakes').textContent;key(' ');assert.equal(el('#mistakes').textContent,peepMistakes,'Repeated peep on the same pending Nay is not charged twice');
+Math.random=()=>0;
+for(let j=0;j<20&&control.peeping();j++){if(current)await endVoice();else await nextTimer()}
+assert(!control.peeping());assert.equal(events.filter(e=>e==='drink:0:sip').length>=1,true);
+// Force the computer who still owes Nay to time out.
+await nextTimer();await nextTimer();assert.equal(control.getState().phase,'restart');assert.equal(control.getState().actor,3);assert.match(control.getState().callout,/Silence/);assert.deepEqual(control.getState().peepers,[0]);await finishCeremony();assert.equal(control.getState().phase,'number');assert.equal(control.getState().actor,3);assert(events.some(e=>e==='drink:3:sip'));assert(events.filter(e=>e.startsWith('drink:')).length>=drinkBefore+2);
+// A correct Nay after peepage clears the debt and keeps the round moving.
+control.force({phase:'nay',actor:3,caller:0,target:3,goldenChair:-1});key(' ');Math.random=()=>.9;for(let j=0;j<20&&control.peeping();j++){if(current)await endVoice();else await nextTimer()}await nextTimer();assert.equal(control.getState().phase,'who');assert.equal(control.getState().actor,0);assert.equal(control.getPending().length,0);key('ArrowDown');assert.equal(control.getState().phase,'number');assert.equal(control.getState().actor,3);
+// A wrong Nay in a Who or number phase is explicitly peepage.
+control.force({phase:'who',actor:0,caller:0,target:3});key(' ');assert.match(control.getState().callout,/Peepage/);
+console.log('Passed: Down Arrow Who with B removed; golden-chair count origin for every 2–9 player combination; peepage sip without ending the round; peep plus silence charges both and restarts the silent player; correct Nay clears peep debt; duplicate peep protection.');
+// Alternate keys operate the same controller and do not also fire old bindings.
+control.force({phase:'number',actor:0,caller:0,target:0});el('#keyboard-layout').value='as';el('#keyboard-layout').onchange();assert.equal(el('#nay-key').textContent,'A');assert.equal(el('#who-key').textContent,'S');key('6');key('a');assert.equal(control.getState().phase,'who');key('s');assert.equal(control.getState().phase,'number');key('6');key(' ');key('ArrowDown');assert.equal(control.getState().phase,'number');
+el('#keyboard-layout').value='space-arrow';el('#keyboard-layout').onchange();key('6');key(' ');key('ArrowDown');assert.equal(control.getState().phase,'number');
+console.log('Passed: alternate A/S layout, synchronized legends, both key pairs accepted in A/S mode, and switching back to Space/Down Arrow.');
+window.matchMedia=()=>({matches:true});control.force({phase:'nay',actor:0,caller:3,target:0,goldenChair:-1});key('a');assert(utterances.at(-1).rate>=1.3);assert.equal(utterances.at(-1).pitch,1);console.log('Passed: mobile speech uses a quicker response rate and unmodified pitch.');
+// Every direction, table size, caller and legal modulus number agrees with seat arithmetic.
+for(let n=2;n<=9;n++)for(const direction of [1,-1])for(let origin=0;origin<n;origin++)for(let number=1;number<=2*n;number++){
+ const expected=((origin+direction*number)%n+n)%n;
+ const s=nextStep({phase:'number',actor:origin},number,n,-1,{direction});assert.equal(s.actor,expected);assert.equal(s.calledSeat,expected);
+ const olympic=nextStep({phase:'number',actor:origin},number,n,-1,{direction,olympic:true});assert.equal(olympic.actor,expected);assert.equal(olympic.phase,'number');assert.equal(olympic.numberOrigin,expected);
+ const golden=nextStep({phase:'number',actor:origin},number,n,expected,{direction,olympic:true});assert.equal(golden.actor,origin);assert.equal(golden.numberOrigin,expected);
+}
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('reverse');key('1');assert.equal(control.getState().actor,5);assert.equal(control.getState().phase,'nay');
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('oscillating');key('6');assert.equal(control.getMode().direction,-1);key('a');assert.equal(control.getMode().direction,-1);key('s');assert.equal(control.getMode().direction,-1);key('1');assert.equal(control.getState().actor,5);assert.equal(control.getMode().direction,1);
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('olympic');key('6');assert.equal(control.getState().actor,0);assert.equal(control.getState().phase,'number');key('a');assert.equal(control.getState().phase,'restart','Olympic Nay is a mistake');
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('olympic-reverse');key('1');assert.equal(control.getState().actor,5);assert.equal(control.getState().phase,'number');
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('modulus');key('1');assert.equal(control.getState().phase,'number');key('2');assert.equal(control.getState().calledNumber,12);assert.equal(control.getState().actor,0);assert.equal(control.getState().phase,'nay');
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('modulus');key('1');key('Enter');assert.equal(control.getState().calledNumber,1);
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('modulus');key('1');await nextTimer();assert.equal(control.getState().calledNumber,1);
+// A pending native voice must NOT change whose turn it is. Advance exactly at audible start.
+control.force({phase:'number',actor:3,caller:3,target:3});control.setMode('regular');timers.clear();globalThis.delayStart=true;let randoms=[.5,.9,.1];Math.random=()=>randoms.shift()??.9;
+control.pump();await nextTimer();assert.equal(current.text,'3');assert.equal(control.getState().actor,3);const delayed=current;delayed.onStart();assert.equal(control.getState().actor,0);assert.equal(control.getState().phase,'nay');key('a');assert.equal(control.getState().phase,'who');assert.equal(control.getState().actor,3);delayed.onStart();assert.equal(control.getState().phase,'who','Late duplicate voice start cannot advance again');await flush();globalThis.delayStart=false;
+// Calling pump twice cannot schedule the same bot response twice.
+control.force({phase:'number',actor:3,caller:3,target:3});timers.clear();Math.random=()=>.9;control.pump();control.pump();assert.equal(timers.size,1);
+// New special rounds are spaced 10–15 rounds apart and the next round reverts to regular.
+control.force({phase:'number',actor:0,caller:0,target:0});const special=control.getNextSpecial();control.setRound(special);control.nextMode();assert.notEqual(control.getMode().id,'regular');assert.equal(el('#mode-banner').hidden,false);assert(control.getNextSpecial()-special>=10&&control.getNextSpecial()-special<=15);control.setRound(special+1);control.nextMode();assert.equal(control.getMode().id,'regular');assert.equal(el('#mode-banner').hidden,true);
+console.log('Passed: all 2–9-seat clockwise/counterclockwise/modulus targets; Olympic direct turns and golden chairs; oscillation only at number calls; modulus two-digit and single-1 entry; delayed and duplicate speech-start protection; duplicate bot pump prevention; special round spacing and regular reset.');
+for(const [pace,limit] of [['easy',2500],['normal',1800],['fast',1300]]){control.force({phase:'number',actor:0,caller:2,target:0});control.setMode('olympic');el('#pace').value=pace;let tick;globalThis.requestAnimationFrame=fn=>(tick=fn,1);control.pump();clock+=limit-1;tick();assert.equal(control.getState().phase,'number');clock+=2;tick();assert.equal(control.getState().phase,'restart');assert.match(control.getState().reason,/Sundial/);}
+console.log('Passed: Olympic deadlines at all three paces, including Easygoing.');
+
+// Pause must suspend ceremonies at the current stage, without repeating a drink.
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('regular');timers.clear();control.fail(2,'Time’s up.');await nextTimer();assert(current);const restartState=control.getState(),beforeDrinks=events.filter(e=>e.startsWith('drink:2')).length;
+assert.equal(el('#pause').disabled,false);el('#pause').onclick();assert.equal(current,null,'Pause stops the voice immediately');await flush();assert.equal(control.getState(),restartState);assert.equal(timers.size,0,'Ceremony waits until resume');assert.equal(el('#pause').disabled,false);el('#pause').onclick();await flush();await finishCeremony();assert.equal(events.filter(e=>e.startsWith('drink:2')).length,beforeDrinks+1,'Resuming charges only one drink');
+// Pause between calls holds the existing bot task instead of scheduling another.
+control.force({phase:'number',actor:3,caller:3,target:3});timers.clear();control.pump();el('#pause').onclick();await nextTimer();assert.equal(current,null);assert.equal(control.getState().actor,3);el('#pause').onclick();await flush();assert(current);assert.equal(current.text,'6');
+// Correct quick replies score points and pressure exactly the called computer.
+control.force({phase:'number',actor:0,caller:0,target:0});control.setMode('regular');timers.clear();el('#pace').value='normal';control.pump();const beforePoints=control.getQuickPoints();clock+=300;key('1');assert.equal(control.getQuickPoints(),beforePoints+3);assert.deepEqual(control.getPressure(),{seat:1,extra:.30000000000000004});assert.match(el('#speed-bonus').textContent,/QUICK \+3/);
+// At 20% random, this target slips under speed pressure but would pass normally.
+Math.random=()=>.2;await endVoice();await nextTimer();assert.equal(control.getPressure(),null);assert.equal(current,null);await nextTimer();assert.equal(control.getState().phase,'restart');assert.equal(control.getState().actor,1);
+console.log('Passed: pause during speech and ceremonies, resume without duplicate drinks, pause between turns, quick points and increased next-target mistake probability.');
+
+// Help pauses even ceremonies; closing it preserves an existing manual pause.
+control.force({phase:'number',actor:0,caller:0,target:0});timers.clear();control.fail(2,'Time’s up.');const ceremony=control.getState();el('#help').onclick();assert.equal(el('#rules').open,true);assert.equal(el('#pause').textContent,'▶ Resume');el('#close-rules').onclick();assert.equal(el('#rules').open,false);assert.equal(el('#pause').textContent,'Ⅱ Pause');assert.equal(control.getState(),ceremony);
+el('#pause').onclick();el('#help').onclick();el('#got-it').onclick();assert.equal(el('#pause').textContent,'▶ Resume');
+console.log('Passed: Help pauses ceremonies, auto-resumes when appropriate, and preserves a manual pause.');
+
+// Intro mode shortcuts announce on keypress, before the opening number.
+globalThis.requestAnimationFrame=()=>1;Math.random=()=>.9;
+for(const [shortcut,id] of [['y','olympic'],['R','reverse'],['o','oscillating'],['M','modulus']]){
+ timers.clear();control.openHuman();assert(control.isIntroOpen());const original=current;key(shortcut);assert.equal(control.getMode().id,id);assert.equal(control.getState().phase,'number');assert.equal(control.getState().actor,0);assert.match(current.text,new RegExp(id==='olympic'?'Olympic':id==='reverse'?'Reverse':id==='oscillating'?'Oscillating':'Modulus'));assert.notEqual(current,original);
+ await flush();assert.match(el('#last').textContent,new RegExp(id==='olympic'?'Olympic':id==='reverse'?'Reverse':id==='oscillating'?'Oscillating':'Modulus'),'Canceled opening must not replace the selected announcement');
+ if(id==='modulus'){key('1');key('2');}else key('1');
+ assert.equal(control.isIntroOpen(),false);const locked=control.getMode().id;key('r');key('y');assert.equal(control.getMode().id,locked,'Cannot change mode after first number');await flush();
+}
+// Selection remains available after the ordinary opening has finished.
+timers.clear();control.openHuman();await endVoice();assert(control.isIntroOpen());key('r');assert.equal(control.getMode().id,'reverse');await endVoice();key('1');assert.equal(control.getState().actor,5);
+// Change your choice while announcing; only the latest announcement owns readiness.
+timers.clear();control.openHuman();key('y');key('m');assert.equal(control.getMode().id,'modulus');await endVoice();assert.equal(control.isIntroOpen(),true);assert.equal(control.getState().phase,'number');key('1');key('2');assert.equal(control.getState().calledNumber,12);key('a');key('s');assert.equal(control.getState().actor,0);key('r');assert.equal(control.getMode().id,'modulus','A self-call does not reopen mode selection');
+// Human loser restarts expose the same intro window; computer turns never do.
+control.force({phase:'number',actor:0,caller:0,target:0});timers.clear();control.fail(0,'Wrong reply.');await finishCeremony();assert(control.isIntroOpen());key('o');assert.equal(control.getMode().id,'oscillating');assert.match(current.text,/Oscillating/);key('1');assert.equal(control.getMode().direction,-1);
+control.force({phase:'number',actor:2,caller:2,target:2});control.setMode('regular');key('m');assert.equal(control.getMode().id,'regular');
+console.log('Passed: all four intro shortcuts, immediate announcements, case-insensitive keys, canceled-opening protection, after-intro selection, changed selection, first-number lock, self-call lock, human loser restart and no computer-turn selection.');
+
+// The first game starts with the left-hand computer and an automatic opening number.
+control.force({phase:'number',actor:0,caller:0,target:0});timers.clear();Math.random=()=>.9;const beforeOpening=utterances.length;el('#start').onclick();assert.equal(control.getState().actor,1);assert.equal(control.isIntroOpen(),false);assert.match(current.text,/I’ll start/);await endVoice();assert.equal([...timers.values()][0].ms,0);await nextTimer();assert.match(current.text,/^[1-9]$/);assert.equal(utterances.length,beforeOpening+2);
+// Chatter runs only between completed rounds, and is spaced 20–30 rounds apart.
+control.force({phase:'nay',actor:0,caller:2,target:0});control.setRound(control.getNextChatter()+10);const silentCount=utterances.length;await control.chatter();assert.equal(utterances.length,silentCount);
+control.force({phase:'restart',actor:2,caller:2,target:2});const chatRound=control.getNextChatter();control.setRound(chatRound);const between=control.getState(),beforeChat=utterances.length;let chatted=false;control.chatter().then(()=>chatted=true);assert.equal(control.getState(),between);await endVoice();await endVoice();await flush();assert(chatted);assert.equal(utterances.length,beforeChat+2);assert(control.getNextChatter()-chatRound>=20&&control.getNextChatter()-chatRound<=30);
+console.log('Passed: neighboring computer opens with an immediate automatic number; chatter only between rounds, two speakers, 20–30-round spacing and no interruption to counting.');
