@@ -20,7 +20,7 @@ Use Node.js 20 or newer:
 npm test
 ```
 
-Tests cover counting for 2–9 players, reverse/modulus/oscillating/Olympic rules, golden chairs, keyboard input, pause, ceremonies, quick bonuses, speech lifecycle, varied bot timing, chatter boundaries, and all 16 doll models including paddle attachments. Device audio and visual performance still require browser review.
+Tests cover counting for 2–9 players, reverse/modulus/oscillating/Olympic rules, golden chairs, keyboard input, pause, ceremonies, quick bonuses, speech lifecycle, varied bot timing, chatter boundaries, and all 18 doll models including paddle attachments. Device audio and visual performance still require browser review.
 
 ## Controls and opening
 
@@ -34,7 +34,7 @@ The player immediately to your left starts the game and New round: “I’ll sta
 
 ## Rules
 
-Ordinary calls count clockwise from the caller’s left as 1. The selected player says Nay, the caller asks Who, and the selected player calls another number. Calling the player count selects yourself. Reverse counts counterclockwise. Olympic skips Nay/Who and uses 2.5/1.8/1.3-second deadlines for Easygoing/Regular/Quick. Oscillating flips direction after every number. Rare modulus calls reach twice the player count. Special rounds normally appear every 10–15 rounds, with a persistent banner.
+Ordinary calls count clockwise from the caller’s left as 1. The selected player says Nay, the caller asks Who, and the selected player calls another number. Calling the player count selects yourself. Reverse counts counterclockwise. Olympic skips Nay/Who and uses 1.8/1.3/1.0/0.75-second deadlines for Easygoing/Regular/Quick/Real Quick. Oscillating flips direction after every number. Rare modulus calls reach twice the player count. Special rounds normally appear every 10–15 rounds, with a persistent banner.
 
 A golden chair stays in the count while its occupant is away. The caller covers it and counts the next number from the empty chair. Departures and returns only occur between rounds. Short conversations also occur only between rounds, spaced 20–30 rounds apart.
 
@@ -44,7 +44,7 @@ Correct replies within 0.5/1/1.8 seconds earn 3/2/1 quick points. A fast number 
 
 ## Cast and display
 
-Sixteen selectable dolls: Wargo, Pekalsky, Saunders, Rose, Martens, Rueben, Colman, Recker, Att, Wilkins, Graham, Lefko, Levitt, Heard, Dauenheimer and Patty Prom. The two background pong players are selectable separately. Reference photographs are not included in this repository or served by the game.
+Eighteen selectable dolls: Wargo, Pekalsky, Saunders, Rose, Martens, Rueben, Colman, Recker, Att, Wilkins, Graham, Lefko, Levitt, Heard, Dauenheimer Patty Prom, Watson and Rooks. The two background pong players are selectable separately. Reference photographs are not included in this repository or served by the game.
 
 Desktop labels follow their players. Mobile labels sit along the edges; Controls only hides the room. Mobile rendering uses reduced pixel ratio, no shadow pass and approximately 30fps. A shared doll factory supplies the counting table and background paddle holders.
 
@@ -62,3 +62,9 @@ Uses the device’s speech engine. Available voices and quality vary. A speech l
 - `tests/`: Node regression checks.
 
 Three.js 0.169.0 is vendored under its MIT license; see `dist/vendor/THREE-LICENSE.txt`.
+
+Settings remains available throughout ceremonies and peepage and pauses/resumes safely. Ordinary reply limits are Easygoing 9 seconds (former Regular), Regular 4.5 seconds (former Quick), Quick 3 seconds and Real Quick 1.8 seconds. Added more golden-chair excuses, wrong-word/silence/peepage heckles, Les chatter, Watson in a West Point shirt, barbecue chef Rooks, Wargo’s floppy olive outback hat, two central beer pitchers, a Mr. Beams closet light and small table props.
+
+## GitHub Pages
+
+The Pages workflow tests and publishes `dist/` on pushes to `main` or when run manually. It intentionally skips deployment while the repository is private. After changing the repository to public, select **Settings → Pages → Source: GitHub Actions**, then run **Publish Whale's Tales** from Actions. No build or package installation is needed.
