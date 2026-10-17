@@ -65,7 +65,7 @@ Uses the device’s speech engine. Available voices and quality vary. A speech l
 
 Three.js 0.169.0 is vendored under its MIT license; see `dist/vendor/THREE-LICENSE.txt`.
 
-Settings remains available throughout ceremonies and peepage and pauses/resumes safely. Ordinary reply limits are Easygoing 9 seconds (former Regular), Regular 4.5 seconds (former Quick), Quick 3 seconds and Real Quick 1.8 seconds. Added more golden-chair excuses, wrong-word/silence/peepage heckles, Les chatter, Watson in a West Point shirt, barbecue chef Rooks, Wargo’s floppy olive outback hat, two central beer pitchers, a black twin-LED Mr. Beams spotlight and small table props.
+Settings remains available throughout ceremonies and peepage and pauses/resumes safely. Ordinary reply limits are Easygoing 9 seconds, Regular 4.5 seconds, Quick 3 seconds and Real Quick 1.8 seconds. Added more golden-chair excuses, wrong-word/silence/peepage heckles, Les chatter, Watson in a West Point shirt, barbecue chef Rooks, Wargo’s floppy olive outback hat, two central beer pitchers, a black twin-LED Mr. Beams spotlight and small table props.
 
 When Saunders is seated and present, every third mistake (including non-ending peepage) triggers a brief NFL safety pose with both hands together overhead. The pose blends back to his resting arms.
 
@@ -87,7 +87,7 @@ Tubby rarely opts out of an expected response with “Mexican!” and immediatel
 
 Player menus list names alphabetically. When Tubby says “Mexican!”, the table calls him out for playing the wrong game.
 
-Att poses on chugs with his left hand behind his neck and right arm extended upward at 45 degrees. I previews the pose immediately when Att is seated or playing pong, even while paused. S and Down Arrow remain Who.
+Att poses on chugs with his left hand behind his neck and right arm extended upward at 45 degrees. I previews the pose immediately when Att is seated or playing pong, even while paused.
 
 Player count, chosen cast, pace, guide, bubbles, sound and controls-only mode persist on this browser. Camera view is remembered. Cindy and Rooks’s smoker choose a visible chair-side spot when the view changes. Martens’s five-second hair flare is scheduled early and recurs occasionally.
 
@@ -98,7 +98,7 @@ Bell and Sapperstien are selectable in the alphabetical cast. I triggers every p
 
 Golden chair on the main screen lets the human watch while the callers cover the empty chair; switch it off to rejoin. The toggle is next to Pause and New round, including on mobile. Computer bathroom breaks are suspended while the human is watching. Recker replaces Wargo in the default cast; existing saved casts stay as selected.
 
-Wargo or Wilkins at the counting table switches the room to a cabin-cruiser aft deck. The two randomly selected background people float in inner tubes instead of playing pong. Levitt or Sapperstien adds an animated background smoker. Brodeur with Recker or Pekalsky adds an orange Nerf ball bouncing from that player’s head into an overhead hoop. BVN joins the alphabetical roster with a dark-haired, blue-gray-suited doll based on the supplied group photograph; I throws his beer toward another seated player. T calls Air Ted, a low banner-towing plane that makes players duck; flybys also recur roughly every two to three minutes. The table spotlight appears only with Recker. F remains the five-second black smiley stick-figure party; S remains Who.
+Wargo or Wilkins at the counting table switches the room to a cabin-cruiser aft deck. The two randomly selected background people float in inner tubes instead of playing pong. Levitt or Sapperstien adds an animated background smoker. Brodeur with Recker or Pekalsky adds an orange Nerf ball bouncing from that player’s head into an overhead hoop. BVN joins the alphabetical roster with a dark-haired, blue-gray-suited doll based on the supplied group photograph; I throws his beer toward another seated player. T calls Air Ted, a low banner-towing plane that makes players duck; flybys also recur roughly every two to three minutes. The table spotlight appears only with Recker. F remains the five-second black smiley stick-figure party;
 
 ## GoatCounter preparation
 
