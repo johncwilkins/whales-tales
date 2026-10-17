@@ -20,7 +20,7 @@ Use Node.js 20 or newer:
 npm test
 ```
 
-Tests cover counting for 2–9 players, reverse/modulus/oscillating/Olympic rules, golden chairs, keyboard input, pause, ceremonies, quick bonuses, speech lifecycle, varied bot timing, chatter boundaries, and all 18 doll models including paddle attachments. Device audio and visual performance still require browser review.
+Tests cover counting for 2–9 players, reverse/modulus/oscillating/Olympic rules, golden chairs, keyboard input, pause, ceremonies, quick bonuses, speech lifecycle, varied bot timing, chatter boundaries, and all 20 playable doll models plus Cindy including paddle attachments. Device audio and visual performance still require browser review.
 
 ## Controls and opening
 
@@ -44,7 +44,7 @@ Correct replies within 0.5/1/1.8 seconds earn 3/2/1 quick points. A fast number 
 
 ## Cast and display
 
-Eighteen selectable dolls: Wargo, Pekalsky, Saunders, Rose, Martens, Rueben, Colman, Recker, Att, Wilkins, Graham, Lefko, Levitt, Heard, Dauenheimer Patty Prom, Watson and Rooks. The two background pong players are selectable separately. Reference photographs are not included in this repository or served by the game.
+Twenty selectable dolls: Wargo, Pekalsky, Saunders, Rose, Martens, Rueben, Colman, Recker, Att, Wilkins, Graham, Lefko, Levitt, Heard, Dauenheimer, Watson, Rooks, Komar, Brodeur and Tubby. The two background pong players are chosen randomly from people absent from the counting table, and refreshed whenever the cast changes. Reference photographs are not included in this repository or served by the game.
 
 Desktop labels follow their players. Mobile labels sit along the edges; Controls only hides the room. Mobile rendering uses reduced pixel ratio, no shadow pass and approximately 30fps. A shared doll factory supplies the counting table and background paddle holders.
 
@@ -70,3 +70,9 @@ When Saunders is seated and present, every third mistake (including non-ending p
 ## GitHub Pages
 
 The Pages workflow tests and publishes `dist/` on pushes to `main` or when run manually. It intentionally skips deployment while the repository is private. After changing the repository to public, select **Settings → Pages → Source: GitHub Actions**, then run **Publish Whale's Tales** from Actions.
+
+Rueben raises a tennis racket whenever a chug ceremony begins. Colman occasionally raises a red boxing glove when speaking. Cindy is a standing companion behind Graham (including when he plays background pong), never a selectable or counted player. Patty Prom has been removed.
+
+On chugs, Komar stands and switches to an Army brigadier general’s uniform with a single silver star on each shoulder, then sits and changes back when the ceremony ends.
+
+Rarely between rounds, Tubby volunteers for flags and a sip. This puts him one mistake from a chug while preserving the rightful round opener. Another player’s next mistake clears his flag normally; existing flags are not displaced.
