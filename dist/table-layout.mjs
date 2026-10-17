@@ -28,3 +28,11 @@ export function sideLabelLayout(anchors,width,height){
  }
  return result;
 }
+
+// Choose a chair-side location in screen space after the camera changes.
+export function chooseVisibleSide(camera,owner,candidates,obstacles,width,height,anchorHeight){
+ const project=offset=>{const point=owner.localToWorld(new T.Vector3(offset.x,anchorHeight,offset.z)).project(camera);return{x:(point.x*.5+.5)*width,y:(-.5*point.y+.5)*height,depth:point.z};};
+ let best=candidates[0],bestScore=-Infinity;
+ for(const candidate of candidates){const p=project(candidate);const edge=Math.min(p.x-28,width-28-p.x,p.y-32,height-32-p.y);const clearance=Math.min(...obstacles.map(o=>Math.hypot((p.x-o.x)*.85,p.y-o.y)),160);const score=Math.min(clearance,150)+Math.min(edge,70)*.75-(p.depth>1?1000:0);if(score>bestScore){bestScore=score;best=candidate;}}
+ return {...best};
+}

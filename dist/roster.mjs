@@ -15,6 +15,7 @@ export const CHARACTERS={
  heard:{id:'heard',name:'Heard',description:'Balding head, black sunglasses, bright blue long-sleeve shirt',shirt:'#2396bd',skin:'#c58e73',hair:'#63564e'},
  dauenheimer:{id:'dauenheimer',name:'Dauenheimer',description:'Receding dark hair, full salt-and-pepper beard, charcoal Coast Guard Park tee, dark shorts',shirt:'#343c3d',skin:'#c79576',hair:'#4c4843'},
  watson:{id:'watson',name:'Watson',description:'Skinny build, brown hair, charcoal West Point Army shirt',shirt:'#252729',skin:'#d4ab8d',hair:'#654634'},
+ mclaen:{id:'mclaen',name:'McLaen',description:'Bald head, long white beard, gray Across the Years shirt with blue raglan sleeves',shirt:'#a7a49a',skin:'#d4ab8e',hair:'#d1d1bc'},
  tubby:{id:'tubby',name:'Tubby',description:'Parted light-brown hair, dark jacket, light-blue shirt and pale pink patterned tie',shirt:'#192129',skin:'#ddb29d',hair:'#87774e'},
  brodeur:{id:'brodeur',name:'Brodeur',description:'Bald head, salt-and-pepper goatee, red-white-blue checked button-down shirt',shirt:'#e0dfd5',skin:'#c5987e',hair:'#514a40'},
  komar:{id:'komar',name:'Komar',description:'Short brown hair, dark rectangular glasses, light rolled-sleeve button-down shirt and blue jeans',shirt:'#d8d0b8',skin:'#cba18b',hair:'#624b35'},

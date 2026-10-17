@@ -5,10 +5,17 @@ import {chatterGap,chooseChatter} from './chatter.mjs';
 import {responseDelay} from './timing.mjs';
 import {pickCallout,pickCeremonyCallout} from './callouts.mjs';
 import {unlockSound,setSoundEnabled,playCue} from './sound.js';
-import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety} from './scene.js';
+import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety,previewAttPose,roundVisuals} from './scene.js';
 import {MODES,chooseAlternate,specialGap,modeAnnouncement} from './modes.mjs';
 import {nextStep,validResponse,penaltyFor,keyResponse} from './rules.mjs';
 const $=s=>document.querySelector(s);let count=6,state={actor:0,caller:0,target:0,phase:'number'},running=false,paused=false,muted=false,waiting=false,token=0,passes=0,mistakes=0,round=1,frame=0,started=false,lastLoser=-1,lossStreak=0,speechSerial=0,away=-1,turns=0,bathroomAt=3,returnAt=0,lastCallout='',activeSpeaker=-1,peepBusy=false;
+let restoringSettings=true,savedSettings={};try{const parsed=JSON.parse(localStorage.getItem('whales-settings')||'{}');if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))savedSettings=parsed;}catch{}
+count=Number.isInteger(savedSettings.count)&&savedSettings.count>=2&&savedSettings.count<=9?savedSettings.count:6;$('#players').value=String(count);
+if(Array.isArray(savedSettings.cast))for(let i=1;i<9;i++)assignCharacter(seatCast,i,CHARACTERS[savedSettings.cast[i]]?savedSettings.cast[i]:'house');
+if(['easy','normal','fast','blitz'].includes(savedSettings.pace))$('#pace').value=savedSettings.pace;
+for(const [key,id] of [['guide','#guide'],['bubbles','#show-bubbles']])if(typeof savedSettings[key]==='boolean')$(id).checked=savedSettings[key];
+seatPlayers(count);setBubblesEnabled($('#show-bubbles').checked);
+function persistSettings(){if(restoringSettings)return;try{localStorage.setItem('whales-settings',JSON.stringify({count:Number($('#players').value),cast:[...seatCast],pace:$('#pace').value,guide:$('#guide').checked,bubbles:$('#show-bubbles').checked,sound:!muted,controlsOnly:!document.body.classList.contains('mobile-table')}))}catch{}}
 let keyboardLayout='as';try{const saved=localStorage.getItem('whales-keyboard-layout');if(['as','space-arrow'].includes(saved))keyboardLayout=saved;}catch{}
 const mobileDevice=()=>typeof window.matchMedia==='function'&&window.matchMedia('(max-width:1000px)').matches;
 let desiredVoice='auto';try{desiredVoice=localStorage.getItem('whales-voice')||'auto'}catch{}
@@ -29,7 +36,7 @@ let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5;
 const mode=()=>({...MODES[modeId],direction});
 const maxCall=()=>count*(MODES[modeId].multiplier||1);
 function clearNumberDraft(){clearTimeout(numberTimer);numberDraft='';}
-function selectRoundMode(){modeId=round>=nextSpecial?chooseAlternate():'regular';if(modeId!=='regular')nextSpecial=round+specialGap();direction=MODES[modeId].direction;clearNumberDraft();renderMode();}
+function selectRoundMode(){modeId=round>=nextSpecial?chooseAlternate():'regular';if(modeId!=='regular')nextSpecial=round+specialGap();direction=MODES[modeId].direction;clearNumberDraft();renderMode();roundVisuals(round);}
 function renderMode(){const m=MODES[modeId],special=modeId!=='regular',dir=direction===1?'↻ CLOCKWISE · LEFT IS 1':'↺ COUNTERCLOCKWISE · RIGHT IS 1';document.body.classList.toggle('alternate-round',special);document.body.classList.toggle('modulus-round',modeId==='modulus');document.body.classList.toggle('olympic-round',Boolean(m.olympic));const banner=$('#mode-banner');banner.hidden=!special;$('#mode-name').textContent=m.name;$('#mode-detail').textContent=(modeId==='oscillating'?dir+' · switches after this call':m.description)+(modeId==='modulus'?' · 1–'+maxCall():'');$('#direction-label').textContent=dir;keypad.classList.toggle('modulus',modeId==='modulus');document.querySelectorAll('#keypad .response').forEach(b=>b.hidden=Number(b.dataset.value)> (modeId==='modulus'?18:9));buttons();}
 
 async function announceOpening(actor,text,myToken){
@@ -188,7 +195,7 @@ async function respond(value){if(!running||paused||state.phase==='restart'||peep
  updatePrompt();buttons();await speaking;if(myToken===token&&running&&!paused&&state===next)pump(myToken)}
 async function startRound(){pendingPeepers.clear();paidPeepers.clear();unlockSound();speechChannel?.resume();if(started)round++;started=true;stop();count=Number($('#players').value);if(people.length!==count){seatPlayers(count);away=-1;turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0}const opener=1;state={actor:opener,caller:opener,target:opener,phase:'number'};running=true;selectRoundMode();$('#welcome').hidden=true;$('#toast').hidden=true;stats();buttons();const myToken=token;status('THE ROUND IS STARTING',people[opener].name+' opens.',"Listen to the opening number. You’ll be prompted when it’s your turn.");setActive(opener);introOpen=false;await announceOpening(opener,"I’ll start. "+(modeId==='regular'?"Whale’s Tales. Prince of Wales calls tales on…":modeAnnouncement(modeId,count)),myToken)}
 $('#start').onclick=startRound;$('#mobile-start').onclick=startRound;$('#new-round').onclick=startRound;document.querySelectorAll('.response').forEach(b=>b.onclick=()=>respond(b.dataset.value));
-document.addEventListener('keydown',e=>{if(e.repeat||$('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
+document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewAttPose())$('#last').textContent='Choose Att for a chair to preview his pose with I.';return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
  const introMode={y:'olympic',r:'reverse',o:'oscillating',m:'modulus'}[e.key.toLowerCase()];if(introMode&&introOpen&&running&&!paused&&state.actor===0&&state.phase==='number'){e.preventDefault();chooseIntroMode(introMode);return}
  if(modeId==='modulus'&&running&&!paused&&state.phase!=='restart'){
   if(e.key==='Enter'&&numberDraft){e.preventDefault();respond(numberDraft);return}
@@ -200,7 +207,7 @@ $('#pause').onclick=()=>{if(!running)return;clearNumberDraft();paused=!paused;wa
  if(paused){pauseSnapshot=[$('#status-tag').textContent,$('#prompt').textContent,$('#detail').textContent];speechChannel?.cancel();clearBubble();setActive(-1);status('TAKING A BREATHER','Round paused.','Talking stopped. Resume when you’re ready.');}
  else{unlockSound();speechChannel?.resume();if(pauseSnapshot)status(...pauseSnapshot);releasePause();if(state.phase!=='restart'&&!peepBusy&&state!==announcementState)pump(token);}
  buttons();};
-function setMuted(value){muted=value;setSoundEnabled(!muted);$('#audio-enabled').checked=!muted;$('#preview-voice').disabled=muted;$('#sound').textContent=muted?'◖ Sound off':'◖ Sound on';$('#sound').setAttribute('aria-pressed',String(!muted));if(muted)speechChannel?.cancel();else{unlockSound();speechChannel?.resume();}}
+function setMuted(value){muted=value;setSoundEnabled(!muted);$('#audio-enabled').checked=!muted;$('#preview-voice').disabled=muted;$('#sound').textContent=muted?'◖ Sound off':'◖ Sound on';$('#sound').setAttribute('aria-pressed',String(!muted));persistSettings();if(muted)speechChannel?.cancel();else{unlockSound();speechChannel?.resume();}}
 $('#sound').onclick=()=>setMuted(!muted);$('#audio-enabled').onchange=()=>setMuted(!$('#audio-enabled').checked);
 
 $('#players').onchange=()=>{$('#players').blur();pendingPeepers.clear();paidPeepers.clear();stop();$('#welcome').hidden=false;count=Number($('#players').value);seatPlayers(count);renderCast();away=-1;turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0;buttons();$('#toast').hidden=true;if(!running)status('TAKE YOUR SEAT','Ready when you are.',`A court of ${count}. You and ${count-1} computer players.`)};
@@ -217,6 +224,10 @@ let settingsPaused=false;
 $('#settings-toggle').onclick=()=>{settingsPaused=running&&!paused;if(settingsPaused)$('#pause').click();$('#configuration').showModal();};
 function closeSettings(){speechChannel?.cancel();$('#configuration').close();if(settingsPaused&&running&&paused)$('#pause').click();settingsPaused=false;}
 $('#close-configuration').onclick=closeSettings;$('#configuration').addEventListener('cancel',e=>{e.preventDefault();closeSettings()});
-$('#table-toggle').onclick=()=>{const showing=document.body.classList.toggle('mobile-table');$('#table-toggle').textContent=showing?'Controls only':'Show table';$('#table-toggle').setAttribute('aria-pressed',String(showing));};
+$('#table-toggle').onclick=()=>{const showing=document.body.classList.toggle('mobile-table');$('#table-toggle').textContent=showing?'Controls only':'Show table';$('#table-toggle').setAttribute('aria-pressed',String(showing));persistSettings();};
 
 $('#preview-voice').onclick=async()=>{if(muted||!speechChannel)return;unlockSound();speechChannel.resume();const voice=selectVoice(voices(),0,$('#voice').value||'auto',{single:true});await speechChannel.speak('Whale’s Tales. Nay. Who? For God’s sake, get his number!',{...(voice?{voice}:{}),rate:1,pitch:1,volume:1});};
+
+$('#configuration').addEventListener('change',persistSettings);if(savedSettings.sound===false)setMuted(true);if(savedSettings.controlsOnly===true){document.body.classList.remove('mobile-table');$('#table-toggle').textContent='Show table';$('#table-toggle').setAttribute('aria-pressed','false');}
+
+restoringSettings=false;

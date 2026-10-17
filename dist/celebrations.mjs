@@ -58,5 +58,20 @@ export function startGeneral(avatar,time){const r=avatar.userData.generalRig;if(
 export function updateGeneralPose(avatar,time){const r=avatar.userData.generalRig;if(!r)return;const amount=time>=r.start&&time<r.until?Math.max(0,Math.min(1,(time-r.start)/550,(r.until-time)/450)):0;r.uniform.visible=amount>.04;avatar.position.y=r.restY+amount*.45;r.shirt.color.copy(r.restColor).lerp(new T.Color('#3e4934'),amount);for(const piece of r.hidden)piece.visible=amount<.04;}
 
 export function attachHairFire(head){const fire=new T.Group();fire.name='Martens’s hair flare-up';head.add(fire);fire.position.set(0,.28,0);fire.visible=false;const orange=new T.MeshBasicMaterial({color:'#f26a18'}),yellow=new T.MeshBasicMaterial({color:'#ffe47c'});for(let j=0;j<5;j++){const flame=new T.Group();fire.add(flame);flame.position.set((j-2)*.083,0,Math.sin(j*2)*.065);const profile=[[0,0],[.055,.015],[.072,.08],[.04,.2],[.018,.3],[0,.4]].map(([r,y])=>new T.Vector2(r,y));part(flame,new T.LatheGeometry(profile,10),orange);const core=part(flame,new T.LatheGeometry(profile,10),yellow,0,0,.025);core.scale.set(.56,.65,.56);}head.userData.hairFire={fire,start:0,until:0,next:0};return fire;}
-export function startHairFire(head,time){const r=head.userData.hairFire;if(!r||time<r.next)return false;r.start=time;r.until=time+3300;r.next=time+25000;return true;}
+export function startHairFire(head,time){const r=head.userData.hairFire;if(!r||time<r.next)return false;r.start=time;r.until=time+5000;r.next=time+18000;return true;}
 export function updateHairFire(head,time){const r=head.userData.hairFire;if(!r)return;r.fire.visible=time>=r.start&&time<r.until;if(!r.fire.visible)return;const edge=Math.min(1,(time-r.start)/220,(r.until-time)/300);for(const [j,flame] of r.fire.children.entries()){flame.scale.set(1,Math.max(.05,edge*(.7+.25*Math.sin(time/80+j*1.9))),1);flame.rotation.z=Math.sin(time/130+j)*.14;}}
+
+export function attachAttRig(avatar,skin){
+ const arms=avatar.userData.arms,hands=avatar.userData.hands;
+ const rig={arms,hands,restArms:arms.map(a=>({position:a.position.clone(),quaternion:a.quaternion.clone(),scale:a.scale.clone()})),restHands:hands.map(h=>({position:h.position.clone(),rotation:h.rotation.clone()})),forearms:[],start:0,until:0};
+ for(let i=0;i<2;i++){const forearm=part(avatar,new T.CapsuleGeometry(.065,.87,3,8),skin);forearm.visible=false;rig.forearms.push(forearm);}avatar.userData.attRig=rig;return rig;
+}
+export function startAttPose(avatar,time,duration=3400){const rig=avatar.userData.attRig;if(!rig)return false;rig.start=time-1;rig.until=time+duration;return true;}
+export function updateAttPose(avatar,time){
+ const r=avatar.userData.attRig;if(!r)return;const amount=time>=r.start&&time<r.until?Math.max(0,Math.min(1,(time-r.start)/280,(r.until-time)/350)):0;
+ const shoulders=[new T.Vector3(-.3,1.65,0),new T.Vector3(.3,1.65,0)],elbows=[new T.Vector3(-.6,2.12,-.09),new T.Vector3(.65,2,.02)],targets=[new T.Vector3(-.12,2.08,-.25),new T.Vector3(1,2.35,.02)];
+ for(let j=0;j<2;j++){const arm=r.arms[j],hand=r.hands[j],rest=r.restArms[j],upper=elbows[j].clone().sub(shoulders[j]);arm.position.copy(rest.position).lerp(shoulders[j].clone().add(elbows[j]).multiplyScalar(.5),amount);arm.quaternion.copy(rest.quaternion).slerp(new T.Quaternion().setFromUnitVectors(new T.Vector3(0,1,0),upper.clone().normalize()),amount);arm.scale.copy(rest.scale);arm.scale.y=rest.scale.y+(upper.length()/.58-rest.scale.y)*amount;
+ hand.position.copy(r.restHands[j].position).lerp(targets[j],amount);hand.rotation.set(r.restHands[j].rotation.x+((j===0?.4:-Math.PI/2)-r.restHands[j].rotation.x)*amount,r.restHands[j].rotation.y*(1-amount),0);
+ const delta=targets[j].clone().sub(elbows[j]),forearm=r.forearms[j];forearm.visible=amount>.04;forearm.position.copy(elbows[j]).add(hand.position).multiplyScalar(.5);forearm.scale.y=delta.length();forearm.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),hand.position.clone().sub(elbows[j]).normalize());
+ }
+}
