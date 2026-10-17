@@ -20,13 +20,14 @@ Use Node.js 20 or newer:
 npm test
 ```
 
-Tests cover counting for 2–9 players, reverse/modulus/oscillating/Olympic rules, golden chairs, keyboard input, pause, ceremonies, quick bonuses, speech lifecycle, varied bot timing, chatter boundaries, and all 21 playable doll models plus Cindy including paddle attachments. Device audio and visual performance still require browser review.
+Tests cover counting for 2–9 players, reverse/modulus/oscillating/Olympic rules, golden chairs, keyboard input, pause, ceremonies, quick bonuses, speech lifecycle, varied bot timing, chatter boundaries, and all 24 playable doll models plus Cindy including paddle attachments. Device audio and visual performance still require browser review.
 
 ## Controls and opening
 
 - A or Space: Nay.
 - S or Down Arrow: Who.
-- I: preview Att’s pose.
+- I: preview all present signature moves.
+- B: cartoon stick-figure break.
 - Number row/numeric keypad or onscreen number buttons: call a number.
 - Pause works during play and ceremonies and stops speech immediately.
 - Help explains all rules and pauses automatically.
@@ -45,7 +46,7 @@ Correct replies within 0.5/1/1.8 seconds earn 3/2/1 quick points. A fast number 
 
 ## Cast and display
 
-Twenty-one selectable dolls: Wargo, Pekalsky, Saunders, Rose, Martens, Rueben, Colman, Recker, Att, Wilkins, Graham, Lefko, Levitt, Heard, Dauenheimer, Watson, Rooks, Komar, Brodeur, Tubby and McLaen. The two background pong players are chosen randomly from people absent from the counting table, and refreshed whenever the cast changes. Reference photographs are not included in this repository or served by the game.
+Twenty-four selectable dolls: Wargo, Pekalsky, Saunders, Rose, Martens, Rueben, Colman, Recker, Att, Wilkins, Graham, Lefko, Levitt, Heard, Dauenheimer, Watson, Rooks, Komar, Brodeur, Tubby, McLaen, Bell, Sapperstien and Tichanski. The two background pong players are chosen randomly from people absent from the counting table, and refreshed whenever the cast changes. Reference photographs are not included in this repository or served by the game.
 
 Desktop labels follow their players. Mobile labels sit along the edges; Controls only hides the room. Mobile rendering uses reduced pixel ratio, no shadow pass and approximately 30fps. A shared doll factory supplies the counting table and background paddle holders.
 
@@ -89,3 +90,5 @@ Player menus list names alphabetically. When Tubby says “Mexican!”, the tabl
 Att poses on chugs with his left hand behind his neck and right arm extended upward at 45 degrees. I previews the pose immediately when Att is seated or playing pong, even while paused. S and Down Arrow remain Who.
 
 Player count, chosen cast, pace, guide, bubbles, sound and controls-only mode persist on this browser. Camera view is remembered. Cindy and Rooks’s smoker choose a visible chair-side spot when the view changes. Martens’s five-second hair flare is scheduled early and recurs occasionally.
+
+Bell and Sapperstien are selectable in the alphabetical cast. I triggers every present signature move; B triggers a prominent stick-figure vomit gag which also happens rarely between rounds. A rolled joint and ashtray appear on the table when Levitt or Sapperstien is seated.
