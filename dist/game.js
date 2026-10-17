@@ -102,7 +102,7 @@ async function rareSantaBeat(myToken){
  if(myToken!==token||!running||paused||state.phase!=='restart'||round<nextSantaRound||Math.random()>=.018)return true;
  const result=previewSanta(Math.random()<.3);if(!result)return true;
  nextSantaRound=round+35+Math.floor(Math.random()*26);
- status('A HOLIDAY INTERRUPTION',result.withElf?'Santa brought company.':'Santa takes the table.','The next round starts after the dance.');
+ status('A HOLIDAY INTERRUPTION',result.withElf?'Santa brought company.':'Santa takes the bar.','The next round starts after the dance.');
  await wait(result.duration);return myToken===token&&running&&state.phase==='restart';
 }
 

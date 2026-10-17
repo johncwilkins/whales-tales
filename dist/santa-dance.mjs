@@ -22,41 +22,51 @@ function performer(elf=false){
  if(elf){for(const x of [-.135,.135])ball(body,.145,red,x,1.35,.18,1,.85,.6);box(body,.54,.035,.035,red,0,1.29,.15);}
  const garments=[];
  function garment(name,group,at,kind){group.name=name;body.add(group);garments.push({group,at,kind,rest:group.position.clone()});return group;}
- const hat=new T.Group();hat.position.y=2.12;shape(hat,new T.ConeGeometry(.255,.48,16),elf?green:red,0,.21,0);shape(hat,new T.TorusGeometry(.23,.045,8,20),white).rotation.x=Math.PI/2;ball(hat,.07,white,0,.48,0);garment('Removable hat',hat,3.2,'hat');
+ const hat=new T.Group();hat.position.y=2.12;shape(hat,new T.ConeGeometry(.255,.48,16),elf?green:red,0,.21,0);shape(hat,new T.TorusGeometry(.23,.045,8,20),white).rotation.x=Math.PI/2;ball(hat,.07,white,0,.48,0);garment('Removable hat',hat,.7,'hat');
  const coat=new T.Group();coat.position.y=1.13;
  ball(coat,1,elf?green:red,0,0,0,elf?.32:.49,elf?.47:.5,elf?.25:.36);
  box(coat,.08,.8,.055,white,0,0,elf?.255:.365);box(coat,elf?.65:.96,.08,elf?.5:.72,black,0,-.16,0);box(coat,.13,.1,.045,gold,0,-.16,elf?.27:.38);
  for(const x of [-1,1]){const sleeve=limb(coat,x*(elf?.3:.47),.35,.57,elf?green:red,.125);sleeve.rotation.z=x*.25;}
- garment(elf?'Removable elf tunic':'Removable Santa coat',coat,5.8,'coat');
+ garment(elf?'Removable elf tunic':'Removable Santa coat',coat,2.1,'coat');
  const pants=new T.Group();pants.position.y=.74;
  for(const x of [-.17,.17])shape(pants,new T.CylinderGeometry(.14,.13,.62,10),elf?green:red,x,-.28,0);
- garment('Removable trousers',pants,9,'pants');
+ garment('Removable trousers',pants,3.5,'pants');
  return {root,body,torso,arms,legs,head,garments,elf};
 }
-export function createSantaDance(){const group=new T.Group();group.name='Santa table dance';group.visible=false;const santa=performer(),elf=performer(true);group.add(santa.root,elf.root);return {group,santa,elf,start:-Infinity,until:0,duration:17000,withElf:false};}
+function moveCDs(rig,aside){
+ const cds=rig.cds;if(!cds)return;
+ let stack=cds.userData.danceStack;
+ if(!stack){stack=new T.Group();stack.name="Tubby's movable CD collection";for(const child of [...cds.children])if(child.name!=='Deck side bar')stack.add(child);cds.add(stack);cds.userData.danceStack=stack;}
+ stack.position.set(aside?-1.9:0,0,aside?-.08:0);stack.scale.set(aside?.23:1,1,aside?.8:1);
+}
+export function placeSantaDance(rig,onCruiser=false,cds=null){
+ moveCDs(rig,false);rig.cds=cds;rig.group.position.set(onCruiser?-4.1:-7.3,1.99,onCruiser?-3.9:-5.2);rig.group.scale.setScalar(onCruiser?.8:1);rig.deckBar.visible=onCruiser&&!cds;
+}
+export function createSantaDance(){const group=new T.Group();group.name='Santa back-left bar dance';group.visible=false;const santa=performer(),elf=performer(true);group.add(santa.root,elf.root);
+ const deckBar=new T.Group();deckBar.name='Holiday deck bar';box(deckBar,3.6,.12,1.45,green,0,-.06,0);box(deckBar,3.4,2.3,1.25,white,0,-1.27,0);deckBar.visible=false;group.add(deckBar);
+ const rig={group,santa,elf,deckBar,start:-Infinity,until:0,duration:7000,withElf:false,cds:null};placeSantaDance(rig);return rig;}
 export function startSantaDance(rig,time,withElf=false){
  if(time<rig.until)return null;
- rig.start=time;rig.until=time+rig.duration;rig.withElf=withElf;rig.group.visible=true;rig.elf.root.visible=withElf;
+ rig.start=time;rig.until=time+rig.duration;rig.withElf=withElf;rig.group.visible=true;rig.elf.root.visible=withElf;moveCDs(rig,true);updateSantaDance(rig,time);
  for(const p of [rig.santa,rig.elf])for(const g of p.garments){g.group.position.copy(g.rest);g.group.rotation.set(0,0,0);g.group.scale.setScalar(1);g.group.visible=true;}
  return {duration:rig.duration,withElf};
 }
-export function cancelSantaDance(rig){rig.until=0;rig.group.visible=false;}
+export function cancelSantaDance(rig){rig.until=0;rig.group.visible=false;moveCDs(rig,false);}
 export function updateSantaDance(rig,time){
- if(time<rig.start||time>=rig.until){rig.group.visible=false;return false;}
+ if(time<rig.start||time>=rig.until){rig.group.visible=false;moveCDs(rig,false);return false;}
  rig.group.visible=true;const t=(time-rig.start)/1000;
  for(const p of [rig.santa,rig.elf]){
   if(p.elf&&!rig.withElf)continue;
-  const phase=t+(p.elf?.7:0),entry=clamp(t/2.3),exit=clamp((t-15)/2),offset=rig.withElf?(p.elf?.68:-.68):0;
-  // Approach from the far edge, step onto the 1.7m tabletop, then dance.
-  p.root.position.set(offset,entry*1.74-exit*1.74,(-3.3+entry*3.3)*(1-exit)+exit*3.5);
-  p.root.rotation.y=Math.sin(phase*1.4)*.3+exit*Math.PI;
-  p.body.position.y=t<2.3?Math.abs(Math.sin(t*7))*.15:Math.abs(Math.sin(phase*5))*.09;
+  const phase=t+(p.elf?.7:0),offset=rig.withElf?(p.elf?.64:-.64):0;
+  // Appear already on the bar: no approach, climb, or departure animation.
+  p.root.position.set(offset,.045,0);p.root.rotation.y=Math.sin(phase*1.4)*.3;
+  p.body.position.y=Math.abs(Math.sin(phase*5))*.09;
   p.body.rotation.z=Math.sin(phase*4)*.09;p.head.rotation.z=Math.sin(phase*5)*.1;
   for(let i=0;i<2;i++){p.arms[i].rotation.z=(i?1:-1)*(.75+Math.sin(phase*5+i)*.65);p.arms[i].rotation.x=Math.sin(phase*3+i)*.45;p.legs[i].rotation.x=Math.sin(phase*5+i*Math.PI)*.3;}
   for(const g of p.garments){
    const u=t-g.at;g.group.position.copy(g.rest);g.group.rotation.set(0,0,0);g.group.scale.setScalar(1);
    if(u<0)continue;
-   // The hands reach to the garment, pull it away, then fling it across the table.
+   // The hands reach to the garment, pull it away, then fling it onto the bar.
    if(u<.85){const pull=clamp(u/.85);for(let i=0;i<2;i++){p.arms[i].rotation.z=(i?1:-1)*.3;p.arms[i].rotation.x=g.kind==='hat'?-2.7:g.kind==='coat'?-1.25:.35;}
     g.group.position.y+=g.kind==='pants'?-pull*.62:pull*.45;g.group.position.z+=pull*.38;g.group.scale.x=1+pull*.18;
    }else{const flight=u-.85,side=p.elf?-1:1;g.group.position.x=side*Math.min(flight*2.7,2.1);g.group.position.z=.4+Math.min(flight*1.1,1.2);g.group.position.y=g.rest.y+.45+flight*1.7-flight*flight*3;g.group.rotation.set(flight*5,flight*3,side*flight*4);if(g.group.position.y<.06){g.group.position.y=.06;g.group.rotation.set(Math.PI/2,0,side*.8);g.group.scale.set(1,.18,1);}}

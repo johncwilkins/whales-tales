@@ -1,4 +1,4 @@
-import {createSantaDance,startSantaDance,updateSantaDance,cancelSantaDance} from './santa-dance.mjs';
+import {createSantaDance,placeSantaDance,startSantaDance,updateSantaDance,cancelSantaDance} from './santa-dance.mjs';
 import {needsCruiser,needsSpotlight,nerfPair,createCruiser,createTube,createAirTed,startAirTed,updateAirTed,createNerf,updateNerf,createBeerThrow,updateBeerThrow,createPizza,createTubbyCDs,placeTubbyCDs} from './scene-events.mjs';
 import {createVomitRig,startVomit,updateVomit,createJointProp,createDanceRig,startDance,updateDance,attachBackgroundSmoke,updateBackgroundSmoke} from './party-gags.mjs';
 import {attachSafetyRig,updateSafetyPose} from './referee.mjs';
@@ -243,7 +243,7 @@ export function refereeSafety(){const p=people.find(person=>person.name==='Saund
 let nextHairFireRound=2;
 export function roundVisuals(round){if(round<nextHairFireRound)return;const actor=people.find(p=>p.characterId==='martens'&&!p.away)||pongActors.find(p=>p.avatar.userData.characterId==='martens');if(actor&&startHairFire(actor.head,performance.now()))nextHairFireRound=round+4+Math.floor(Math.random()*4);}
 export function previewSignatureMoves(){const now=performance.now();let n=runSignatureMoves([...people,...pongActors],now);for(const p of people){if(p.characterId!=='bvn'||p.away)continue;const target=people.find(q=>q!==p&&!q.away);if(target&&!beerThrows.some(r=>r.thrower===p)){beerThrows.push(createBeerThrow(scene,p,target,now));n++;}}return n;}
-export function previewSanta(withElf=false){return startSantaDance(santaDance,performance.now(),withElf);}
+export function previewSanta(withElf=false){if(performance.now()<santaDance.until)return null;placeSantaDance(santaDance,onCruiser,tubbyCDs);return startSantaDance(santaDance,performance.now(),withElf);}
 export function previewAirTed(){startAirTed(airTed,performance.now());}
 export function previewStickDance(){const now=performance.now();for(const p of [...people,...pongActors]){if(p.away)continue;startDance(p.danceRig,now);if(p.companionDance)startDance(p.companionDance,now);}return 5000;}
 export function previewVomit(){if(gagIndex>=0&&performance.now()<people[gagIndex]?.vomitRig.until)return null;const available=people.map((p,i)=>i).filter(i=>i>0&&!people[i].away);if(!available.length)return null;gagIndex=available[Math.floor(Math.random()*available.length)];const p=people[gagIndex];startVomit(p.vomitRig,performance.now());if(gagNotice)gagNotice.remove();gagNotice=document.createElement('div');gagNotice.className='gag-caption';gagNotice.textContent=p.name+' needs a moment…';mount.append(gagNotice);return{index:gagIndex,duration:p.vomitRig.duration};}
