@@ -5,8 +5,7 @@ function connect(mesh,a,b){const delta=b.clone().sub(a);mesh.position.copy(a).ad
 export function createVomitRig(parent,avatar){
  const group=new T.Group();group.name='Cartoon stick-figure break';group.visible=false;parent.add(group);
  const torso=new T.Group();group.add(torso);const head=new T.Mesh(new T.SphereGeometry(.18,14,10),bright);head.position.set(0,1,0);torso.add(head);
- for(const side of [-1,1]){const eye=new T.Mesh(new T.SphereGeometry(.026,6,4),dark);eye.position.set(side*.065,1.025,.158);torso.add(eye);}
- const mouth=new T.Mesh(new T.TorusGeometry(.032,.009,6,14),dark);mouth.position.set(0,.935,.176);mouth.name='Front of face';torso.add(mouth);
+ const mouth=new T.Mesh(new T.TorusGeometry(.032,.009,6,14),dark);mouth.position.set(0,.935,.176);mouth.name='Hidden mouth emission anchor';mouth.visible=false;torso.add(mouth);
  const spine=limb(torso,bright);connect(spine,new T.Vector3(0,0,0),new T.Vector3(0,.82,0));
  const arms=[];for(const side of [-1,1]){const upper=limb(torso,bright),fore=limb(torso,bright);connect(upper,new T.Vector3(0,.72,0),new T.Vector3(side*.32,.42,.06));connect(fore,new T.Vector3(side*.32,.42,.06),new T.Vector3(side*.3,.12,.17));arms.push(upper,fore);}
  const legs=Array.from({length:4},()=>limb(group,bright));const puddle=new T.Mesh(new T.CircleGeometry(.35,20),green);puddle.rotation.x=-Math.PI/2;puddle.position.set(0,.025,-.78);puddle.visible=false;group.add(puddle);
@@ -29,7 +28,7 @@ export function updateVomit(r,time){
 export function createJointProp(){const g=new T.Group();g.name='Joint and ashtray';g.position.set(1.04,1.72,.13);const tray=new T.Mesh(new T.CylinderGeometry(.16,.16,.025,24),new T.MeshStandardMaterial({color:'#7c827c',metalness:.65,roughness:.35}));g.add(tray);const joint=new T.Mesh(new T.CylinderGeometry(.014,.01,.27,12),new T.MeshStandardMaterial({color:'#e4dec5'}));joint.rotation.z=1.35;joint.position.set(0,.035,0);joint.name='Rolled joint';g.add(joint);return g;}
 
 export function createDanceRig(parent,avatar,seed=0){
- const r=createVomitRig(parent,avatar);r.group.name='Smiley abstract stick-figure dance';
+ const r=createVomitRig(parent,avatar);r.group.name='Faceless black stick-figure dance';
  r.mouth.geometry.dispose();r.mouth.geometry=new T.TorusGeometry(.075,.012,6,20,Math.PI);r.mouth.rotation.z=Math.PI;r.mouth.position.y=.98;
  r.marker.visible=false;r.seed=seed;r.danceUntil=0;r.danceStart=0;r.arms=r.torso.children.filter(o=>o.geometry?.type==='CylinderGeometry').slice(1);return r;
 }
