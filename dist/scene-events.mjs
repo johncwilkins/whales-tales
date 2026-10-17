@@ -76,16 +76,24 @@ export function updateBeerThrow(r,time){
 export function createPizza(){const group=new T.Group();group.name='Rueben pizza';group.position.set(-.55,1.72,.78);part(group,new T.CylinderGeometry(.38,.38,.025,28),'#e2ddd0');part(group,new T.CylinderGeometry(.34,.34,.05,28),'#bd793b',0,.035,0);part(group,new T.CylinderGeometry(.3,.3,.012,28),'#e5bc58',0,.065,0);const crust=part(group,new T.TorusGeometry(.315,.026,8,28),'#ce9449',0,.065,0);crust.rotation.x=Math.PI/2;for(let i=0;i<11;i++){const a=i*2.4,r=.08+(i%3)*.065;part(group,new T.CylinderGeometry(.037,.037,.013,8),'#a84630',Math.sin(a)*r,.079,Math.cos(a)*r);}return group;}
 export function createTubbyCDs(ids){
  if(!ids.includes('tubby'))return null;
- const group=new T.Group();group.name='Tubby CD collection';
+ const group=new T.Group();group.name='Tubby back-bar CD collection';group.position.set(-8,2.005,-5.2);group.userData.caseCount=200;
+ const shell=new T.InstancedMesh(new T.BoxGeometry(.39,.028,.36),new T.MeshStandardMaterial({color:'#63707b',metalness:.3,roughness:.35}),200);shell.name='200 scattered and stacked jewel cases';group.add(shell);
+ const covers=new T.InstancedMesh(new T.BoxGeometry(.34,.002,.33),new T.MeshStandardMaterial({color:'#ffffff',roughness:.8}),200);covers.name='Assorted album covers';group.add(covers);
+ const spines=new T.InstancedMesh(new T.BoxGeometry(.008,.012,.31),mat('#c1c6c7'),200);spines.name='Jewel case spines';group.add(spines);
+ const transform=new T.Object3D(),palette=['#9b655a','#637e9b','#799076','#aa9a60','#827291','#c5b9a0'];let index=0;
+ function addCase(x,y,z,angle){transform.position.set(x,y,z);transform.rotation.set(0,angle,0);transform.updateMatrix();shell.setMatrixAt(index,transform.matrix);transform.position.y+=.016;transform.updateMatrix();covers.setMatrixAt(index,transform.matrix);covers.setColorAt(index,new T.Color(palette[index%palette.length]));transform.position.set(x-Math.cos(angle)*.179,y,z+Math.sin(angle)*.179);transform.updateMatrix();spines.setMatrixAt(index,transform.matrix);index++;}
+ const heights=[9,18,12,21,13,17,16,11,14,15,10,12];
+ for(const [j,height] of heights.entries()){const x=-1.85+(j%6)*.72,z=j<6?-.34:.13;for(let k=0;k<height;k++)addCase(x+Math.sin(k*3.7+j)*.035,.014+k*.03,z+Math.cos(k*2.4+j)*.025,(j%3-1)*.14+Math.sin(k+j)*.09);}
+ for(let j=0;j<32;j++)addCase(-2.08+((j*1.618)%1)*4.16,.014+(j%4)*.03,-.54+((j*.731)%1)*1.06,(j*2.4)%Math.PI);
  const silver=new T.MeshStandardMaterial({color:'#ccd5dc',metalness:.85,roughness:.18,side:T.DoubleSide});
- const positions=[[-1.8,-.75],[-1.38,-1.4],[-.75,-1.75],[.05,-1.9],[.88,-1.62],[1.5,-1.15],[1.9,-.45],[1.78,.35],[1.4,1.15],[.7,1.7],[-.2,1.9],[-1.05,1.5],[-1.7,.8],[-1.1,.2],[.13,1.1],[1.1,.15]];
- for(const [i,[x,z]] of positions.entries()){
-  const disc=new T.Group();disc.name='Music CD '+(i+1);disc.position.set(x,1.714+(i%3)*.006,z);disc.rotation.y=i*2.4;group.add(disc);
-  const face=part(disc,new T.RingGeometry(.034,.185,32),silver);face.rotation.x=-Math.PI/2;
-  const label=part(disc,new T.RingGeometry(.038,.092,24),['#b87461','#759b8a','#6c78ab','#c2ac67'][i%4],0,.002,0);label.rotation.x=-Math.PI/2;
-  for(let k=0;k<3;k++){const glint=part(disc,new T.RingGeometry(.10,.181,10,1,k*2.1,.3),new T.MeshBasicMaterial({color:['#92d6cf','#c6a6dd','#e0d18a'][k],transparent:true,opacity:.45,side:T.DoubleSide}),0,.003,0);glint.rotation.x=-Math.PI/2;}
-  for(let j=0;j<2;j++){const stripe=box(disc,.08,.002,.009,'#313731',0,.005,.045+j*.018);stripe.rotation.y=-.15;}
+ for(let i=0;i<14;i++){
+  const disc=new T.Group();disc.name='Music CD '+(i+1);disc.position.set(-2.08+i*.315,.005+(i%3)*.004,.56+Math.sin(i*2.4)*.025);disc.rotation.y=i*2.4;group.add(disc);
+  const face=part(disc,new T.RingGeometry(.034,.17,28),silver);face.rotation.x=-Math.PI/2;
+  const label=part(disc,new T.RingGeometry(.038,.083,20),palette[i%palette.length],0,.002,0);label.rotation.x=-Math.PI/2;
+  for(let k=0;k<3;k++){const glint=part(disc,new T.RingGeometry(.09,.167,8,1,k*2.1,.3),new T.MeshBasicMaterial({color:['#92d6cf','#c6a6dd','#e0d18a'][k],transparent:true,opacity:.45,side:T.DoubleSide}),0,.003,0);glint.rotation.x=-Math.PI/2;}
  }
- for(const [x,z,angle] of [[-1.7,-1.3,.3],[1.48,.85,-.5]]){const sleeve=new T.Group();sleeve.name='Scuffed CD jewel case';sleeve.position.set(x,1.71,z);sleeve.rotation.y=angle;group.add(sleeve);box(sleeve,.42,.025,.39,'#505764');box(sleeve,.35,.003,.34,'#916a64',.02,.015,0);}
+ // The deck scene has its own left-side bar surface for the same collection.
+ const deckBar=new T.Group();deckBar.name='Deck side bar';deckBar.visible=false;group.add(deckBar);box(deckBar,4.98,.12,1.52,'#eee8d6',0,-.075,0);box(deckBar,4.7,1.85,1.3,'#e2e6df',0,-1.06,0);
  return group;
 }
+export function placeTubbyCDs(group,onCruiser){if(!group)return;group.position.set(onCruiser?-4.4:-8,2.005,onCruiser?-3.9:-5.2);group.scale.set(onCruiser?.6:1,1,onCruiser?.65:1);group.getObjectByName('Deck side bar').visible=onCruiser;}
