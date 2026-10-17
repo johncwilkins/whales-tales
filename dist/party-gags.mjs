@@ -48,3 +48,18 @@ export function updateDance(r,time){
  }
  return true;
 }
+
+export function attachBackgroundSmoke(avatar){
+ const hand=avatar.userData.hands[1],arm=avatar.userData.arms[1];
+ const joint=new T.Mesh(new T.CylinderGeometry(.017,.013,.22,8),new T.MeshStandardMaterial({color:'#eee6c8'}));joint.rotation.x=Math.PI/2;hand.add(joint);joint.position.set(0,0,.11);joint.name='Background smoker doobie';
+ const ember=new T.Mesh(new T.SphereGeometry(.019,6,4),new T.MeshBasicMaterial({color:'#ed8548'}));ember.position.set(0,0,.225);hand.add(ember);
+ const smoke=new T.Group();smoke.name='Drifting doobie smoke';avatar.add(smoke);
+ const puffs=Array.from({length:10},(_,i)=>{const p=new T.Mesh(new T.SphereGeometry(.045,7,5),new T.MeshBasicMaterial({color:'#c8d2c6',transparent:true,opacity:0,depthWrite:false}));smoke.add(p);return p;});
+ return {avatar,hand,arm,joint,ember,puffs,handRest:hand.position.clone(),armRest:arm.rotation.clone()};
+}
+export function updateBackgroundSmoke(r,time){
+ const t=time/1000,drag=Math.pow(Math.max(0,Math.sin(t*.8)),2);
+ r.hand.position.copy(r.handRest).lerp(new T.Vector3(.16,1.91,.48),drag);r.arm.rotation.copy(r.armRest);r.arm.rotation.x-=drag*.7;r.ember.scale.setScalar(.7+drag*.7);
+ r.avatar.updateMatrixWorld(true);const origin=r.avatar.worldToLocal(r.joint.localToWorld(new T.Vector3(0,.11,0)));
+ for(const [i,p] of r.puffs.entries()){const u=(t*.35+i/r.puffs.length)%1;p.position.copy(origin);p.position.x+=Math.sin(t+i)*u*.18;p.position.y+=u*1.35;p.position.z+=u*.15;p.scale.setScalar(.4+u*3);p.material.opacity=(1-u)*.3;}
+}

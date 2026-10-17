@@ -1,4 +1,5 @@
 export const CHARACTERS={
+ bvn:{id:'bvn',name:'BVN',description:'Dark parted hair, broad smile, blue-gray suit, white shirt and navy tie',shirt:'#526273',skin:'#cba28b',hair:'#292820'},
  tichanski:{id:'tichanski',name:'Tichanski',description:'Thick short dark-brown hair, broad smile, pale-blue striped dress shirt and yellow patterned tie',shirt:'#b4c8d1',skin:'#d7ae97',hair:'#40372b'},
  bell:{id:'bell',name:'Bell',description:'Red baseball cap, thin silver glasses, broad smile, navy polo over white undershirt',shirt:'#354f69',skin:'#d3ae99',hair:'#938b78'},
  sapperstien:{id:'sapperstien',name:'Sapperstien',description:'Receding brown hair, short salt-and-pepper beard, green checked button-down',shirt:'#5c7767',skin:'#c89f86',hair:'#655d51'},
@@ -26,7 +27,7 @@ export const CHARACTERS={
 
 };
 export const SUPPORTING_CHARACTERS={cindy:{id:'cindy',name:'Cindy',description:'Dark wavy shoulder-length hair, warm smile and black top; stands behind Graham',shirt:'#191b21',skin:'#d2a18b',hair:'#302323'}};
-export const seatCast=['house','wargo','pekalsky','saunders','rose','martens','rueben','house','house'];
+export const seatCast=['house','recker','pekalsky','saunders','rose','martens','rueben','house','house'];
 export const HOUSE_NAMES=['You','Maggie','Jack','Rosa','Eddie','June','Finn','Bea','Lou'];
 export function assignCharacter(cast,seat,id){if(id!=='house'&&!CHARACTERS[id])return;for(let i=1;i<cast.length;i++)if(i!==seat&&id!=='house'&&cast[i]===id)cast[i]='house';cast[seat]=id}
 
