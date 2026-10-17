@@ -15,9 +15,12 @@ export const CHARACTERS={
  heard:{id:'heard',name:'Heard',description:'Balding head, black sunglasses, bright blue long-sleeve shirt',shirt:'#2396bd',skin:'#c58e73',hair:'#63564e'},
  dauenheimer:{id:'dauenheimer',name:'Dauenheimer',description:'Receding dark hair, full salt-and-pepper beard, charcoal Coast Guard Park tee, dark shorts',shirt:'#343c3d',skin:'#c79576',hair:'#4c4843'},
  watson:{id:'watson',name:'Watson',description:'Skinny build, brown hair, charcoal West Point Army shirt',shirt:'#252729',skin:'#d4ab8d',hair:'#654634'},
+ brodeur:{id:'brodeur',name:'Brodeur',description:'Bald head, salt-and-pepper goatee, red-white-blue checked button-down shirt',shirt:'#e0dfd5',skin:'#c5987e',hair:'#514a40'},
+ komar:{id:'komar',name:'Komar',description:'Short brown hair, dark rectangular glasses, light rolled-sleeve button-down shirt and blue jeans',shirt:'#d8d0b8',skin:'#cba18b',hair:'#624b35'},
  rooks:{id:'rooks',name:'Rooks',description:'Short and stout barbecue chef, sandy-blond hair, red-check shirt and dark apron',shirt:'#a65b42',skin:'#d1a286',hair:'#b39a6c'},
- patty_prom:{id:'patty_prom',name:'Patty Prom',description:'Shoulder-length curly brown hair, gold hoops, navy top, white lei',shirt:'#172331',skin:'#cc9e7f',hair:'#806448'}
+
 };
-export const seatCast=['house','wargo','pekalsky','saunders','rose','martens','rueben','patty_prom','house'];
+export const SUPPORTING_CHARACTERS={cindy:{id:'cindy',name:'Cindy',description:'Dark wavy shoulder-length hair, warm smile and black top; stands behind Graham',shirt:'#191b21',skin:'#d2a18b',hair:'#302323'}};
+export const seatCast=['house','wargo','pekalsky','saunders','rose','martens','rueben','house','house'];
 export const HOUSE_NAMES=['You','Maggie','Jack','Rosa','Eddie','June','Finn','Bea','Lou'];
 export function assignCharacter(cast,seat,id){if(id!=='house'&&!CHARACTERS[id])return;for(let i=1;i<cast.length;i++)if(i!==seat&&id!=='house'&&cast[i]===id)cast[i]='house';cast[seat]=id}
