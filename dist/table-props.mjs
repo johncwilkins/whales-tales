@@ -20,13 +20,19 @@ export function createTableProps(){
  }
  for(const [x,z] of [[-.64,-.16],[.55,-.35],[-.1,.68],[.73,.36]]){disc(.24,.015,material('#304232'),group,x,.009,z);const ring=add(new T.TorusGeometry(.205,.008,4,20),cream,group,x,.018,z);ring.rotation.x=Math.PI/2;}
  pitcher(-.64,-.16,-.3);pitcher(.55,-.35,2.5);
- // White battery closet light, sensor dome and softly glowing LED face.
- const light=new T.Group();light.name='Mr. Beams closet light';light.position.set(.04,.01,.2);light.rotation.y=-.25;group.add(light);
- const housing=disc(.205,.075,material('#e4e4d9'),light,0,.04,0);housing.scale.x=1.35;
- const bezel=disc(.155,.025,material('#bcc1b5'),light,-.04,.087,0);bezel.scale.x=1.2;
- const lens=disc(.133,.018,material('#fff3c5',{emissive:'#ffe2a0',emissiveIntensity:1.3}),light,-.04,.106,0);lens.scale.x=1.2;
- const sensor=add(new T.SphereGeometry(.045,12,8),material('#273532',{roughness:.2}),light,.186,.078,0);sensor.scale.y=.55;
- const brand=lettering('Mr. Beams',.19,.045,light,-.02,.127,.12);brand.rotation.x=-Math.PI/2;
+ // Black twin-LED Mr. Beams spotlight on its adjustable mounting foot.
+ const light=new T.Group();light.name='Mr. Beams spotlight';light.position.set(.04,.01,.2);light.rotation.y=-.45;group.add(light);
+ const plastic=material('#242627',{roughness:.6}),rimMat=material('#383b3c'),reflector=material('#d9dedc',{metalness:.8,roughness:.16});
+ disc(.145,.045,plastic,light,0,.025,-.035);const stem=add(new T.BoxGeometry(.07,.15,.085),plastic,light,0,.12,-.035);
+ const pivot=disc(.065,.15,rimMat,light,0,.18,-.035);pivot.rotation.z=Math.PI/2;
+ const head=new T.Group();head.name='Adjustable spotlight head';head.position.set(0,.33,0);head.rotation.x=-.2;light.add(head);
+ const housing=disc(.18,.24,plastic,head,0,0,0);housing.rotation.x=Math.PI/2;
+ const bezel=disc(.188,.045,rimMat,head,0,0,.13);bezel.rotation.x=Math.PI/2;
+ const face=disc(.167,.012,plastic,head,0,0,.158);face.rotation.x=Math.PI/2;
+ for(const x of [-.074,.074]){const lens=disc(.059,.018,reflector,head,x,.055,.172);lens.rotation.x=Math.PI/2;lens.name='LED reflector';const led=add(new T.SphereGeometry(.013,8,6),material('#fff4b7',{emissive:'#fff0b8',emissiveIntensity:1.1}),head,x,.055,.188);led.scale.z=.25;}
+ const sensor=add(new T.SphereGeometry(.073,12,8),material('#d6d9d6',{roughness:.42,flatShading:true}),head,0,-.071,.167);sensor.name='Frosted motion sensor';sensor.scale.set(1,.85,.48);
+ for(let k=0;k<6;k++){const a=k*Math.PI/3;const rib=add(new T.BoxGeometry(.012,.012,.16),rimMat,head,Math.sin(a)*.178,Math.cos(a)*.178,.025);rib.rotation.z=-a;}
+ const brand=lettering('Mr. Beams',.17,.033,light,0,.065,.11,'#c1c4bc');
  const cards=new T.Group();cards.name='Playing cards';cards.position.set(-.23,.02,-.75);cards.rotation.y=.25;group.add(cards);
  for(let i=0;i<3;i++){const c=add(new T.BoxGeometry(.14,.008,.21),cream,cards,i*.055,i*.008,0);c.rotation.y=i*.18;const pip=disc(.018,.004,material(i%2?'#263632':'#a84237'),cards,i*.055,.008+i*.008,0);}
  const opener=new T.Group();opener.name='Bottle opener';opener.position.set(.66,.028,.4);opener.rotation.y=-.55;group.add(opener);add(new T.BoxGeometry(.07,.027,.24),steel,opener);const loop=add(new T.TorusGeometry(.055,.018,6,14),steel,opener,0,0,-.15);loop.rotation.x=Math.PI/2;
@@ -43,4 +49,21 @@ export function createRibPlate(){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=64;const ctx=canvas.getContext('2d'),fade=ctx.createRadialGradient(32,32,0,32,32,32);fade.addColorStop(0,'rgba(220,218,202,.65)');fade.addColorStop(.4,'rgba(207,207,197,.25)');fade.addColorStop(1,'rgba(207,207,197,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,64,64);const texture=new T.CanvasTexture(canvas);
  plate.userData.steam=[];for(let i=0;i<7;i++){const wisp=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,opacity:0,depthWrite:false,color:'#e2e0d5'}));wisp.name='Rib steam';plate.add(wisp);plate.userData.steam.push(wisp);}return plate;
 }
-export function updateRibSteam(plate,time){for(const [i,wisp] of (plate?.userData.steam||[]).entries()){const life=(time/3800+i/7)%1;wisp.position.set(Math.sin(time/1900+i*2)*(.025+life*.075),.1+life*.65,Math.cos(time/2300+i)*.055);wisp.scale.setScalar(.08+life*.24);wisp.material.opacity=Math.sin(life*Math.PI)*.33;}}
+export function updateRibSteam(plate,time){const origin=plate?.userData.steamOrigin||{x:0,y:0,z:0};for(const [i,wisp] of (plate?.userData.steam||[]).entries()){const life=(time/3800+i/7)%1;wisp.position.set(origin.x+Math.sin(time/1900+i*2)*(.025+life*.075),origin.y+.1+life*.65,origin.z+Math.cos(time/2300+i)*.055);wisp.scale.setScalar(.08+life*.24);wisp.material.opacity=Math.sin(life*Math.PI)*.33;}}
+
+export function createSmoker(){
+ const smoker=new T.Group();smoker.name='Rooks’s backyard rib smoker';smoker.position.set(.88,0,-1.05);smoker.rotation.y=-.35;
+ const iron=new T.MeshStandardMaterial({color:'#292d2c',roughness:.77}),metal=new T.MeshStandardMaterial({color:'#7f8581',metalness:.65,roughness:.4});
+ const add=(geo,mat,x,y,z)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;smoker.add(m);return m;};
+ const barrel=add(new T.CylinderGeometry(.29,.29,.82,24),iron,0,1.07,0);barrel.rotation.z=Math.PI/2;
+ for(const x of [-.3,.3])for(const z of [-.18,.18]){const leg=add(new T.CylinderGeometry(.025,.025,.91,8),iron,x,.52,z);leg.rotation.z=x<0?-.08:.08;}
+ for(const x of [-.3,.3]){const wheel=add(new T.CylinderGeometry(.11,.11,.045,14),iron,x,.12,-.21);wheel.rotation.x=Math.PI/2;}
+ const seam=add(new T.TorusGeometry(.294,.008,6,24,Math.PI),metal,0,1.07,0);seam.rotation.y=Math.PI/2;
+ add(new T.BoxGeometry(.28,.035,.05),metal,0,1.24,.28);for(const x of [-.12,.12])add(new T.BoxGeometry(.025,.09,.035),iron,x,1.23,.23);
+ const gauge=add(new T.CylinderGeometry(.045,.045,.017,16),new T.MeshStandardMaterial({color:'#e1dac7'}),.18,1.25,.2);gauge.rotation.x=Math.PI/2;
+ add(new T.CylinderGeometry(.043,.043,.55,10),iron,.31,1.53,-.08);add(new T.CylinderGeometry(.073,.073,.022,12),iron,.31,1.82,-.08);
+ const firebox=add(new T.CylinderGeometry(.17,.17,.3,16),iron,-.52,.92,0);firebox.rotation.z=Math.PI/2;
+ for(let k=0;k<3;k++)add(new T.BoxGeometry(.025,.016,.11),new T.MeshStandardMaterial({color:'#9d5b25',emissive:'#a64c10',emissiveIntensity:.65}),-.68,.88+k*.035,.08);
+ const smokeCanvas=document.createElement('canvas');smokeCanvas.width=smokeCanvas.height=64;const ctx=smokeCanvas.getContext('2d'),fade=ctx.createRadialGradient(32,32,0,32,32,32);fade.addColorStop(0,'rgba(183,183,175,.65)');fade.addColorStop(1,'rgba(183,183,175,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,64,64);const texture=new T.CanvasTexture(smokeCanvas);
+ smoker.userData.steamOrigin={x:.31,y:1.76,z:-.08};smoker.userData.steam=[];for(let i=0;i<8;i++){const wisp=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,opacity:0,depthWrite:false,color:'#aeb2ab'}));wisp.name='Smoker chimney smoke';smoker.add(wisp);smoker.userData.steam.push(wisp);}return smoker;
+}

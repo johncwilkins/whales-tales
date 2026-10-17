@@ -1,3 +1,4 @@
+const mexican=['Wrong game! This is Whale’s Tales, Tubby.','Mexican? You’re playing the wrong game!','Wrong game, Tubby! But we’ll accept the drink.','That’s the other game! Drink and start, Tubby.'];
 const ordinary=[
  'Hold it! That’s on you!',
  'Wrong turn! Take a sip.',
@@ -100,8 +101,8 @@ function choose(kind,pool,previous,random){
  remaining.set(kind,bag.filter(s=>s!==line));recent.set(kind,[...history,line].slice(-Math.min(3,pool.length-1)));return line;
 }
 export function pickCallout(reason,name='',previous='',random=Math.random){
- const kind=/peepage/i.test(reason)?'peep':/silence/i.test(reason)?'silence':/quick who/i.test(reason)?'quick':/sundial|time|slow|hesitat/i.test(reason)?'slow':/said |wrong word|wrong reply/i.test(reason)?'wrong':'ordinary';
+ const kind=/mexican/i.test(reason)?'mexican':/peepage/i.test(reason)?'peep':/silence/i.test(reason)?'silence':/quick who/i.test(reason)?'quick':/sundial|time|slow|hesitat/i.test(reason)?'slow':/said |wrong word|wrong reply/i.test(reason)?'wrong':'ordinary';
  const prefix=name?name+'! ':'';
- return prefix+choose(kind,{peep,silence,quick,slow,wrong,ordinary}[kind],previous.startsWith(prefix)?previous.slice(prefix.length):previous,random);
+ return prefix+choose(kind,{mexican,peep,silence,quick,slow,wrong,ordinary}[kind],previous.startsWith(prefix)?previous.slice(prefix.length):previous,random);
 }
 export function pickCeremonyCallout(kind,random=Math.random){return choose(kind,kind==='flag'?flag:chug,'',random)}

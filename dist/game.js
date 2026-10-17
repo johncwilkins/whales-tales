@@ -25,7 +25,7 @@ refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?
 const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
 const pace=()=>options[$('#pace').value];
 let modeId='regular',direction=1,nextSpecial=1+specialGap(),numberDraft='',numberTimer=0,botPending=null,humanPending=null;
-let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6;
+let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5;
 const mode=()=>({...MODES[modeId],direction});
 const maxCall=()=>count*(MODES[modeId].multiplier||1);
 function clearNumberDraft(){clearTimeout(numberTimer);numberDraft='';}
@@ -48,7 +48,7 @@ function chooseIntroMode(id){
 }
 
 
-function renderCast(){const container=$('#seat-selects');container.replaceChildren();for(let i=1;i<count;i++){const row=document.createElement('label');row.className='cast-row';const title=document.createElement('span');title.textContent='Chair '+i+(i===1?' · your left':'');row.append(title);const select=document.createElement('select');select.setAttribute('aria-label','Player in chair '+i);const house=document.createElement('option');house.value='house';house.textContent=HOUSE_NAMES[i]+' · house player';select.append(house);for(const character of Object.values(CHARACTERS)){const option=document.createElement('option');option.value=character.id;option.textContent=character.name;select.append(option)}select.value=seatCast[i];select.onchange=()=>{pendingPeepers.clear();paidPeepers.clear();stop();assignCharacter(seatCast,i,select.value);seatPlayers(count);away=-1;turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0;$('#welcome').hidden=false;$('#toast').hidden=true;renderCast();status('CAST YOUR TABLE','Ready when you are.','Your selected players are seated. Pull up a chair to begin.');buttons()};row.append(select);container.append(row);}}
+function renderCast(){const container=$('#seat-selects');container.replaceChildren();for(let i=1;i<count;i++){const row=document.createElement('label');row.className='cast-row';const title=document.createElement('span');title.textContent='Chair '+i+(i===1?' · your left':'');row.append(title);const select=document.createElement('select');select.setAttribute('aria-label','Player in chair '+i);const house=document.createElement('option');house.value='house';house.textContent=HOUSE_NAMES[i]+' · house player';select.append(house);for(const character of Object.values(CHARACTERS).sort((a,b)=>a.name.localeCompare(b.name))){const option=document.createElement('option');option.value=character.id;option.textContent=character.name;select.append(option)}select.value=seatCast[i];select.onchange=()=>{pendingPeepers.clear();paidPeepers.clear();stop();assignCharacter(seatCast,i,select.value);seatPlayers(count);away=-1;turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0;$('#welcome').hidden=false;$('#toast').hidden=true;renderCast();status('CAST YOUR TABLE','Ready when you are.','Your selected players are seated. Pull up a chair to begin.');buttons()};row.append(select);container.append(row);}}
 renderCast();
 
 const keypad=$('#keypad');for(let n=1;n<=18;n++){const b=document.createElement('button');b.className='response';b.dataset.value=n;b.textContent=n;b.setAttribute('aria-label','Call '+n);keypad.append(b)}
@@ -89,12 +89,21 @@ async function chatterBeat(myToken){
  return true;
 }
 
+async function tubbyMexicanBeat(turn,myToken){
+ if(myToken!==token||!running||paused||state!==turn||turn.phase==='restart'||turn.actor===0||turn.actor===away||people[turn.actor]?.name!=='Tubby'||round<nextTubbyMexican||Math.random()>=.025)return false;
+ nextTubbyMexican=round+10+Math.floor(Math.random()*9);
+ await say(turn.actor,'Mexican!',myToken,{ceremony:true});
+ if(myToken===token&&running&&state===turn&&!paused)fail(turn.actor,'Mexican! Tubby volunteered for the drink.',{instantDrink:true});
+ return true;
+}
+
 async function pump(myToken,{openingNumber=false}={}){if(myToken!==token||!running||paused||peepBusy)return;
  if(state.phase==='restart'){await restartLoser(myToken);return}
  updatePrompt();if(state.actor===0){humanTurn(myToken);return}
  const turn=state;if(botPending===turn)return;botPending=turn;waiting=false;buttons();
  const live=()=>myToken===token&&running&&!paused&&state===turn&&!peepBusy;
  await wait(openingNumber?0:responseDelay({pace:$('#pace').value,phase:turn.phase,selfCall:turn.caller===turn.target,olympic:MODES[modeId].olympic,seat:turn.actor}));if(!live())return;
+ if(!openingNumber&&await tubbyMexicanBeat(turn,myToken))return;if(!live())return;
  const extra=pressure?.seat===turn.actor?pressure.extra:0;if(extra)pressure=null;
  if(!openingNumber&&Math.random()<Math.min(.5,pace().botMiss+extra)){
   // A missed number is a timeout, never an audible call that secretly doesn't count.
@@ -110,8 +119,8 @@ async function pump(myToken,{openingNumber=false}={}){if(myToken!==token||!runni
  if(myToken===token&&running&&!paused&&state===next&&state.actor!==0)pump(myToken);
 }
 
-function fail(loser,reason){const peepers=[...pendingPeepers];for(const peeper of peepers)if(!paidPeepers.has(peeper))playerDrinks(peeper,{});pendingPeepers.clear();paidPeepers.clear();const expected=/quick who/i.test(reason)?'the other player’s Nay before your Who':loser===0&&state.actor!==0?'to wait for your turn':state.phase==='number'?`a number from 1 to ${maxCall()}`:state.phase==='nay'?'Nay':'Who';const p=penaltyFor(lastLoser,lossStreak,loser);lastLoser=p.lastLoser;lossStreak=p.streak;clearFlags();if(loser===0)mistakes++;round++;stats();stop();running=true;reactToMistake();
- const name=people[loser].name,callout=pickCallout(reason,loser===0?'':name,lastCallout);lastCallout=callout;state={actor:loser,caller:loser,target:loser,phase:'restart',penalty:p,reason,expected,callout,peepers};
+function fail(loser,reason,{instantDrink=false}={}){const peepers=[...pendingPeepers];for(const peeper of peepers)if(!paidPeepers.has(peeper))playerDrinks(peeper,{});pendingPeepers.clear();paidPeepers.clear();const expected=/quick who/i.test(reason)?'the other player’s Nay before your Who':loser===0&&state.actor!==0?'to wait for your turn':state.phase==='number'?`a number from 1 to ${maxCall()}`:state.phase==='nay'?'Nay':'Who';const p=penaltyFor(lastLoser,lossStreak,loser);lastLoser=p.lastLoser;lossStreak=p.streak;clearFlags();if(loser===0)mistakes++;round++;stats();stop();running=true;reactToMistake();
+ const name=people[loser].name,callout=pickCallout(reason,loser===0?'':name,lastCallout);lastCallout=callout;state={actor:loser,caller:loser,target:loser,phase:'restart',penalty:p,reason,expected,callout,peepers,preDrank:instantDrink,preDrinkAt:instantDrink?performance.now():null};if(instantDrink)playerDrinks(loser,p);
  status(p.chug?'THREE LOSSES · CHUG':p.flag?'TWO LOSSES · FLAG':'SLIP-UP · TAKE A SIP',callout,`${reason} Expected ${expected}. ${p.chug?'Chug, then restart.':p.flag?'Flag and crushed cup earned.':'Take a sip.'} ${loser===0?'You open':name+' opens'} the next round.`);
  const toast=$('#toast');toast.hidden=false;toast.replaceChildren();const title=document.createElement('b');title.textContent=callout;toast.dataset.kind='mistake';toast.append(title,document.createTextNode(`${reason} Expected ${expected}.${peepers.length?' '+peepers.map(i=>people[i].name).join(', ')+' also drank for peepage.'+(/silence/i.test(reason)?' The silent player restarts.':''):''}`));buttons();pump(token)
 }
@@ -127,13 +136,13 @@ async function restartLoser(myToken){
   setCeremony(loser,'chug');playCue('chug');ceremonyToast('chug','THREE IN A ROW. CHUG!',`${name==='You'?'You have':name+' has'} the floor. The whole table is watching.`);
   status('THE CHUG CEREMONY','All eyes on '+(loser===0?'you.':name+'.'),'Three consecutive losses. Flag and crushed cup cleared.');
   await say(shouter,`${loser===0?'You':name}! ${pickCeremonyCallout('chug')}`,myToken,{ceremony:true});if(!alive())return;
-  playerDrinks(loser,penalty);const start=performance.now();
+  if(!state.preDrank)playerDrinks(loser,penalty);const start=state.preDrinkAt??performance.now();
   for(let j=1;j<=3;j++){await say(crowd[(j-1)%crowd.length]??loser,'Chug!',myToken,{ceremony:true});if(!alive())return;await wait(220);if(!alive())return;}
   await wait(Math.max(0,4550-(performance.now()-start)));if(!alive())return;
  }else{
   setCeremony(loser,penalty.flag?'flag':'sip');
   ceremonyToast(penalty.flag?'flag':'sip',penalty.flag?'FLAG ON THE PLAY.':name==='You'?'Take your sip.':`${name} takes a sip.`,penalty.flag?'Two losses in a row. Get their number!':'Then the floor is yours.');
-  playerDrinks(loser,penalty);
+  if(!state.preDrank)playerDrinks(loser,penalty);
   if(penalty.flag){playCue('flag');await say(shouter,pickCeremonyCallout('flag'),myToken,{ceremony:true});if(!alive())return;}
   else{await wait(1350);if(!alive())return;}
  }
