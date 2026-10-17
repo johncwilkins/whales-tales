@@ -33,3 +33,14 @@ export function createTableProps(){
  for(let i=0;i<2;i++){const die=new T.Group();die.name='Dice';die.position.set(-.05+i*.14,.07,.72);die.rotation.y=i*.6;group.add(die);add(new T.BoxGeometry(.095,.095,.095),cream,die);for(let j=0;j<i+2;j++)disc(.007,.002,material('#2d3430'),die,(j%2-.5)*.035,.049,(Math.floor(j/2)-.5)*.035);}
  return group;
 }
+
+export function createRibPlate(){
+ const plate=new T.Group();plate.name='Rooks’s smoking barbecue ribs';plate.position.set(-.4,1.72,.95);plate.rotation.y=.3;
+ const cream=new T.MeshStandardMaterial({color:'#e8dfc8',roughness:.32}),glaze=new T.MeshStandardMaterial({color:'#79321c',roughness:.27}),bone=new T.MeshStandardMaterial({color:'#e8d7b5',roughness:.75}),char=new T.MeshStandardMaterial({color:'#3b2117',roughness:.8});
+ const add=(geometry,material,x,y,z)=>{const m=new T.Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=true;plate.add(m);return m;};
+ add(new T.CylinderGeometry(.29,.25,.027,32),cream,0,0,0);const rim=add(new T.TorusGeometry(.265,.016,6,32),cream,0,.018,0);rim.rotation.x=Math.PI/2;
+ for(let k=0;k<4;k++){const x=(k-1.5)*.096;add(new T.BoxGeometry(.084,.055,.3),glaze,x,.049,0);const rib=add(new T.CapsuleGeometry(.013,.33,2,8),bone,x,.032,0);rib.rotation.x=Math.PI/2;for(let j=0;j<3;j++){const mark=add(new T.BoxGeometry(.083,.003,.009),char,x,.078,-.09+j*.09);mark.rotation.y=.2;}}
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=64;const ctx=canvas.getContext('2d'),fade=ctx.createRadialGradient(32,32,0,32,32,32);fade.addColorStop(0,'rgba(220,218,202,.65)');fade.addColorStop(.4,'rgba(207,207,197,.25)');fade.addColorStop(1,'rgba(207,207,197,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,64,64);const texture=new T.CanvasTexture(canvas);
+ plate.userData.steam=[];for(let i=0;i<7;i++){const wisp=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,opacity:0,depthWrite:false,color:'#e2e0d5'}));wisp.name='Rib steam';plate.add(wisp);plate.userData.steam.push(wisp);}return plate;
+}
+export function updateRibSteam(plate,time){for(const [i,wisp] of (plate?.userData.steam||[]).entries()){const life=(time/3800+i/7)%1;wisp.position.set(Math.sin(time/1900+i*2)*(.025+life*.075),.1+life*.65,Math.cos(time/2300+i)*.055);wisp.scale.setScalar(.08+life*.24);wisp.material.opacity=Math.sin(life*Math.PI)*.33;}}

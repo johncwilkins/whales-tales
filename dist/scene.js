@@ -1,6 +1,6 @@
 import {attachSafetyRig,updateSafetyPose} from './referee.mjs';
-import {attachCelebrationRig,updateCelebrationPose,startCelebration,attachGeneralRig,startGeneral,updateGeneralPose} from './celebrations.mjs';
-import {createTableProps} from './table-props.mjs';
+import {attachCelebrationRig,updateCelebrationPose,startCelebration,attachGeneralRig,startGeneral,updateGeneralPose,attachHairFire,startHairFire,updateHairFire} from './celebrations.mjs';
+import {createTableProps,createRibPlate,updateRibSteam} from './table-props.mjs';
 import {frameMobileTable,sideLabelLayout} from './table-layout.mjs';
 import {CHARACTERS,SUPPORTING_CHARACTERS,choosePongCast,seatCast,HOUSE_NAMES} from './roster.mjs';
 import * as T from './vendor/three.module.js';
@@ -169,6 +169,7 @@ function createAvatar(character,i){
  const thumb=mesh(new T.CapsuleGeometry(.022,.045,2,6),skin,hand,-s*.073,-.008,.025);thumb.rotation.x=Math.PI/2;thumb.rotation.z=s*.55;if(isWargo||isSaunders||isRose||isMartens||isGraham||isLefko||isDauenheimer){box(.235,.27,.25,mat(isSaunders?'#c77067':isMartens?'#d3cbb5':isGraham?'#387483':isDauenheimer?'#313136':'#a59b75'),avatar,s*.2,.65,.16);cylinder(.085,.075,.4,skin,avatar,s*.2,.32,.18);}else box(.18,.62,.2,mat(isKomar?'#375774':isWilkins?'#a89c80':'#303c3b'),avatar,s*.18,.48,.16);box(.2,.12,.35,black,avatar,s*(isWargo||isSaunders||isRose||isMartens||isGraham||isLefko||isDauenheimer?.2:.18),.12,.24)}
  if(isCindy){body.scale.set(.88,1,.72);for(let j=0;j<2;j++){const side=j===0?-1:1;const arm=avatar.userData.arms[j],hand=avatar.userData.hands[j];arm.position.set(side*.31,1.35,0);arm.rotation.set(0,0,side*.09);hand.position.set(side*.34,1.04,.03);hand.rotation.set(0,0,0);}for(const side of [-1,1]){box(.17,.93,.2,black,avatar,side*.15,.55,.02);box(.19,.12,.32,black,avatar,side*.15,.12,.1);}avatar.scale.set(.96,1.17,.96);}
  if(isRueben||isColman)attachCelebrationRig(avatar,character.id,skin);
+ if(isMartens)attachHairFire(head);
  if(isKomar)attachGeneralRig(avatar,shirt);
  if(isSaunders)attachSafetyRig(avatar,avatar.userData.arms,avatar.userData.hands,skin);
  return {avatar,head,mouth};
@@ -195,10 +196,11 @@ export function seatPlayers(n){for(const p of people){scene.remove(p.group);p.la
  const chairSeat=box(.78,.12,.75,darkWood,g,0,.72,0);const chairBack=box(.8,.9,.13,green,g,0,1.18,-.37);for(const x of [-.28,.28])for(const z of [-.27,.27])box(.07,.72,.07,darkWood,g,x,.36,z);
  const {avatar,head,mouth}=createAvatar(character,i);g.add(avatar);
  const companion=createCompanion(character);if(companion)g.add(companion);
+ const ribPlate=character?.id==='rooks'?createRibPlate():null;if(ribPlate)g.add(ribPlate);
  const beerCup=cup(g,.48,1.69,.86,.85);
  const label=document.createElement('div');label.className='seat-label'+(i===0?' you':'');label.textContent=i===0?'YOU':character?.name||names[i];labels.append(label);
  const ring=mesh(new T.TorusGeometry(.48,.025,8,48),new T.MeshBasicMaterial({color:'#d5e79f',transparent:true,opacity:0}),g,0,.06,0);ring.rotation.x=Math.PI/2;
- people.push({group:g,avatar,companion,characterId:character?.id,chairSeat,chairBack,away:false,head,mouth,ring,label,name:character?.name||names[i],seed:i*1.6,beerCup,fill:1,flags:0,crushedCount:0,flagMarker:null,drinkUntil:0});
+ people.push({group:g,avatar,companion,ribPlate,characterId:character?.id,chairSeat,chairBack,away:false,head,mouth,ring,label,name:character?.name||names[i],seed:i*1.6,beerCup,fill:1,flags:0,crushedCount:0,flagMarker:null,drinkUntil:0});
 }active=-1;setPongPlayers();resize();}
 
 export function clearFlags(){for(let i=0;i<people.length;i++){const p=people[i];if(p.flagMarker){p.group.remove(p.flagMarker);p.flagMarker.traverse(o=>{if(o.geometry)o.geometry.dispose()});p.flagMarker=null}p.flags=0;p.crushedCount=0;p.label.textContent=p.away?p.name+' ◇':i===0?'YOU':p.name;}}
@@ -227,7 +229,7 @@ export function setBubblesEnabled(on){bubblesEnabled=on;bubbles.style.display=on
 function hideBubble(){if(bubbleEl)bubbleEl.remove();bubbleEl=null;bubbleIndex=-1}
 export function clearBubble(){hideBubble();voiceIndex=-1}
 export function showBubble(i,text,duration=2000){clearBubble();setTalking(i);bubbleIndex=i;bubbleUntil=performance.now()+duration;bubbleEl=document.createElement('div');bubbleEl.className='bubble'+(/^\d+$/.test(text)?' number':'');bubbleEl.textContent=text;bubbles.append(bubbleEl)}
-export function setTalking(i){voiceIndex=i;const p=people[i];if(p?.characterId==='colman'&&!p.away&&Math.random()<.22)startCelebration(p.avatar,performance.now(),2800);}
+export function setTalking(i){voiceIndex=i;const p=people[i];if(p?.characterId==='colman'&&!p.away&&Math.random()<.22)startCelebration(p.avatar,performance.now(),2800);if(p?.characterId==='martens'&&!p.away&&Math.random()<.08)startHairFire(p.head,performance.now());}
 export function changeView(){view=(view+1)%3;resize()}
 let w=1,h=1;
 function resize(){if(!mount.clientWidth||!mount.clientHeight)return;w=mount.clientWidth;h=mount.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;renderer.setPixelRatio(Math.min(devicePixelRatio,phone()?1:1.7));renderer.shadowMap.enabled=!phone();
@@ -237,7 +239,7 @@ function resize(){if(!mount.clientWidth||!mount.clientHeight)return;w=mount.clie
 new ResizeObserver(resize).observe(mount);
 const v=new T.Vector3();function project(p,x,y,z){v.set(x,y,z);p.group.localToWorld(v);v.project(camera);return [(v.x*.5+.5)*w,(-v.y*.5+.5)*h,v.z]}
 let lastRender=0;
-function animate(t){requestAnimationFrame(animate);if(document.hidden||!mount.clientWidth||!mount.clientHeight||phone()&&t-lastRender<32)return;lastRender=t;const sec=t/1000;for(let i=0;i<people.length;i++){const p=people[i];updateSafetyPose(p.avatar,t);updateCelebrationPose(p.avatar,t);updateGeneralPose(p.avatar,t);const talking=voiceIndex===i;p.head.rotation.z=Math.sin(sec*.8+p.seed)*.035+(talking?Math.sin(sec*13+p.seed)*.06:0);p.head.position.y=(p.head.userData.restY??1.99)+Math.sin(sec*1.2+p.seed)*.016+(talking?Math.abs(Math.sin(sec*14))*.075:0);p.mouth.scale.y=voiceIndex===i?(1+Math.abs(Math.sin(sec*18))*3):1;p.ring.material.color.set(ceremonyIndex===i?(ceremonyKind==='mistake'?'#ff865d':'#ffe09b'):'#d5e79f');p.ring.material.opacity=(ceremonyIndex===i||active===i)?.65+Math.sin(sec*(ceremonyIndex===i?7:3))*.25:0;const d=p.drinkUntil>t?Math.sin(Math.min(1,(t-p.drinkStart)/(p.drinkUntil-p.drinkStart))*Math.PI):0;
+function animate(t){requestAnimationFrame(animate);if(document.hidden||!mount.clientWidth||!mount.clientHeight||phone()&&t-lastRender<32)return;lastRender=t;const sec=t/1000;for(let i=0;i<people.length;i++){const p=people[i];updateSafetyPose(p.avatar,t);updateCelebrationPose(p.avatar,t);updateGeneralPose(p.avatar,t);updateRibSteam(p.ribPlate,t);updateHairFire(p.head,t);const talking=voiceIndex===i;p.head.rotation.z=Math.sin(sec*.8+p.seed)*.035+(talking?Math.sin(sec*13+p.seed)*.06:0);p.head.position.y=(p.head.userData.restY??1.99)+Math.sin(sec*1.2+p.seed)*.016+(talking?Math.abs(Math.sin(sec*14))*.075:0);p.mouth.scale.y=voiceIndex===i?(1+Math.abs(Math.sin(sec*18))*3):1;p.ring.material.color.set(ceremonyIndex===i?(ceremonyKind==='mistake'?'#ff865d':'#ffe09b'):'#d5e79f');p.ring.material.opacity=(ceremonyIndex===i||active===i)?.65+Math.sin(sec*(ceremonyIndex===i?7:3))*.25:0;const d=p.drinkUntil>t?Math.sin(Math.min(1,(t-p.drinkStart)/(p.drinkUntil-p.drinkStart))*Math.PI):0;
  p.beerCup.position.set(.48-d*.32,1.69+d*.22,.86-d*.48);p.beerCup.rotation.x=-d*.9;p.head.rotation.x=-d*.15+(talking?Math.sin(sec*14)*.09:0);
  }
  const anchors=people.map((p,i)=>{const a=project(p,0,phone()?2.15:2.68,0);p.label.style.display=a[2]>1?'none':'';p.label.classList.toggle('speaking',voiceIndex===i);return {index:i,x:a[0],y:a[1]}});
