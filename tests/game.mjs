@@ -149,3 +149,5 @@ el('#golden-chair').checked=false;el('#golden-chair').onchange();
 console.log('Passed: front-screen Golden Chair hands off a pending human reply, ignores spectator inputs, counts from the empty chair and returns the human to play.');
 
 const prePlane=control.getState();key("t");assert(events.includes("air-ted"));assert.equal(control.getState(),prePlane);console.log("Passed: T previews Air Ted without submitting a game response.");
+
+const bubbleState=control.getState();el('#show-bubbles').checked=false;el('#show-bubbles').onchange();assert.equal(sceneMock.bubbles,false);assert.equal(control.getState(),bubbleState);el('#show-bubbles').checked=true;el('#show-bubbles').onchange();assert.equal(sceneMock.bubbles,true);const markup=fs.readFileSync(root+'dist/index.html','utf8');assert.equal((markup.match(/id="show-bubbles"/g)||[]).length,1);assert(markup.indexOf('id="show-bubbles"')<markup.indexOf('id="configuration"'));console.log('Passed: Bubbles is on the front screen and toggles immediately without changing the turn.');
