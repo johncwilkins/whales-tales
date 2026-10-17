@@ -15,6 +15,7 @@ export const CHARACTERS={
  heard:{id:'heard',name:'Heard',description:'Balding head, black sunglasses, bright blue long-sleeve shirt',shirt:'#2396bd',skin:'#c58e73',hair:'#63564e'},
  dauenheimer:{id:'dauenheimer',name:'Dauenheimer',description:'Receding dark hair, full salt-and-pepper beard, charcoal Coast Guard Park tee, dark shorts',shirt:'#343c3d',skin:'#c79576',hair:'#4c4843'},
  watson:{id:'watson',name:'Watson',description:'Skinny build, brown hair, charcoal West Point Army shirt',shirt:'#252729',skin:'#d4ab8d',hair:'#654634'},
+ tubby:{id:'tubby',name:'Tubby',description:'Parted light-brown hair, dark jacket, light-blue shirt and pale pink patterned tie',shirt:'#192129',skin:'#ddb29d',hair:'#87774e'},
  brodeur:{id:'brodeur',name:'Brodeur',description:'Bald head, salt-and-pepper goatee, red-white-blue checked button-down shirt',shirt:'#e0dfd5',skin:'#c5987e',hair:'#514a40'},
  komar:{id:'komar',name:'Komar',description:'Short brown hair, dark rectangular glasses, light rolled-sleeve button-down shirt and blue jeans',shirt:'#d8d0b8',skin:'#cba18b',hair:'#624b35'},
  rooks:{id:'rooks',name:'Rooks',description:'Short and stout barbecue chef, sandy-blond hair, red-check shirt and dark apron',shirt:'#a65b42',skin:'#d1a286',hair:'#b39a6c'},
@@ -24,3 +25,5 @@ export const SUPPORTING_CHARACTERS={cindy:{id:'cindy',name:'Cindy',description:'
 export const seatCast=['house','wargo','pekalsky','saunders','rose','martens','rueben','house','house'];
 export const HOUSE_NAMES=['You','Maggie','Jack','Rosa','Eddie','June','Finn','Bea','Lou'];
 export function assignCharacter(cast,seat,id){if(id!=='house'&&!CHARACTERS[id])return;for(let i=1;i<cast.length;i++)if(i!==seat&&id!=='house'&&cast[i]===id)cast[i]='house';cast[seat]=id}
+
+export function choosePongCast(seatedIds,rng=Math.random){const occupied=new Set(seatedIds),available=Object.keys(CHARACTERS).filter(id=>!occupied.has(id)),chosen=[];while(chosen.length<2&&available.length)chosen.push(available.splice(Math.floor(rng()*available.length),1)[0]);return chosen;}

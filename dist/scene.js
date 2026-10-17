@@ -2,7 +2,7 @@ import {attachSafetyRig,updateSafetyPose} from './referee.mjs';
 import {attachCelebrationRig,updateCelebrationPose,startCelebration,attachGeneralRig,startGeneral,updateGeneralPose} from './celebrations.mjs';
 import {createTableProps} from './table-props.mjs';
 import {frameMobileTable,sideLabelLayout} from './table-layout.mjs';
-import {CHARACTERS,SUPPORTING_CHARACTERS,seatCast,HOUSE_NAMES} from './roster.mjs';
+import {CHARACTERS,SUPPORTING_CHARACTERS,choosePongCast,seatCast,HOUSE_NAMES} from './roster.mjs';
 import * as T from './vendor/three.module.js';
 const mount=document.querySelector('#scene'), labels=document.querySelector('#labels'), bubbles=document.querySelector('#bubbles');
 export const people=[];
@@ -90,7 +90,7 @@ const personColors=['#b9c88a','#b56443','#57777b','#c2964e','#725b81','#558077',
 const names=HOUSE_NAMES;
 let voiceIndex=-1,bubbleIndex=-1,bubbleEl=null,bubbleUntil=0,bubblesEnabled=true;
 function createAvatar(character,i){
- const isBrodeur=character?.id==='brodeur',isKomar=character?.id==='komar',isWargo=character?.id==='wargo',isPekalsky=character?.id==='pekalsky',isSaunders=character?.id==='saunders',isRose=character?.id==='rose',isMartens=character?.id==='martens',isRueben=character?.id==='rueben',isCindy=character?.id==='cindy',isColman=character?.id==='colman',isRecker=character?.id==='recker',isAtt=character?.id==='att',isWilkins=character?.id==='wilkins',isGraham=character?.id==='graham',isLefko=character?.id==='lefko',isLevitt=character?.id==='levitt',isHeard=character?.id==='heard',isDauenheimer=character?.id==='dauenheimer',isWatson=character?.id==='watson',isRooks=character?.id==='rooks';
+ const isTubby=character?.id==='tubby',isBrodeur=character?.id==='brodeur',isKomar=character?.id==='komar',isWargo=character?.id==='wargo',isPekalsky=character?.id==='pekalsky',isSaunders=character?.id==='saunders',isRose=character?.id==='rose',isMartens=character?.id==='martens',isRueben=character?.id==='rueben',isCindy=character?.id==='cindy',isColman=character?.id==='colman',isRecker=character?.id==='recker',isAtt=character?.id==='att',isWilkins=character?.id==='wilkins',isGraham=character?.id==='graham',isLefko=character?.id==='lefko',isLevitt=character?.id==='levitt',isHeard=character?.id==='heard',isDauenheimer=character?.id==='dauenheimer',isWatson=character?.id==='watson',isRooks=character?.id==='rooks';
  const shirt=mat(character?.shirt||personColors[i]);const skin=mat(character?.skin||['#d7a378','#b77a57','#ebba91','#ab7354','#d3a080','#e1b58b','#bd8e69','#d3a986','#936447'][i]);const hair=mat(character?.hair||['#514338','#5b2c1e','#2a2522','#35201c','#69675e','#a27b42','#58453c','#3c2e29','#232322'][i]);
 
  const avatar=new T.Group();avatar.userData.hands=[];avatar.userData.arms=[];
@@ -114,6 +114,7 @@ function createAvatar(character,i){
  if(isRose){hairTop.position.set(0,.18,-.08);hairTop.scale.set(1.06,.55,.96);for(let k=0;k<5;k++){const strand=sphere(.1,hair,head,-.18+k*.09,.25,-.03);strand.scale.set(.4,.75,1.25)}}
  if(isMartens){hairTop.position.y=.21;hairTop.scale.set(.97,.72,1);const sweep=sphere(.21,hair,head,-.08,.25,.05);sweep.scale.set(1,.45,.85)}
  if(isRueben){hairTop.position.y=.23;hairTop.scale.set(1.18,1.05,1.1);for(let k=0;k<9;k++){const curl=sphere(.11,hair,head,Math.sin(k*2.4)*.23,.2+(k%3)*.065,Math.cos(k*2.4)*.16);curl.scale.y=.85}}
+ if(isTubby){hairTop.position.set(0,.18,-.045);hairTop.scale.set(1.05,.66,1);for(const side of [-1,1]){const wave=sphere(.19,hair,head,side*.13,.235,.065);wave.scale.set(.9,.47,.9);wave.rotation.z=-side*.28;const collar=box(.13,.14,.023,mat('#a3cfde'),avatar,side*.066,1.64,.271);collar.rotation.z=side*.45;const lapel=box(.11,.36,.025,shirt,avatar,side*.18,1.43,.28);lapel.rotation.z=side*.17;}box(.26,.56,.022,mat('#99c3d5'),avatar,0,1.34,.264);const tie=mat('#d8bfc3');const knot=box(.069,.08,.025,tie,avatar,0,1.59,.29);knot.rotation.z=Math.PI/4;const shape=new T.Shape();shape.moveTo(-.03,0);shape.lineTo(-.055,-.36);shape.lineTo(0,-.42);shape.lineTo(.055,-.36);shape.lineTo(.03,0);shape.closePath();mesh(new T.ShapeGeometry(shape),tie,avatar,0,1.54,.3);for(let k=0;k<5;k++){const dot=box(.014,.014,.004,mat('#65777b'),avatar,(k%2?-.014:.014),1.49-k*.065,.304);dot.rotation.z=Math.PI/4;}}
  if(isBrodeur){hairTop.visible=false;const beard=mesh(new T.SphereGeometry(.16,18,12),hair,head,0,-.185,.16);beard.scale.set(.82,.8,.62);const chin=mesh(new T.SphereGeometry(.115,16,10),mat('#9a978e'),head,0,-.245,.2);chin.scale.set(.78,.53,.4);for(const side of [-1,1]){const moustache=box(.083,.026,.025,hair,head,side*.045,-.095,.268);moustache.rotation.z=side*.17;const collar=box(.14,.14,.022,shirt,avatar,side*.075,1.64,.25);collar.rotation.z=side*.4;}const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#e8e3d7';ctx.fillRect(0,0,128,128);for(let k=0;k<128;k+=32){ctx.fillStyle='#35537899';ctx.fillRect(k,0,12,128);ctx.fillRect(0,k,128,12);ctx.fillStyle='#ad344acc';ctx.fillRect(k+18,0,5,128);ctx.fillRect(0,k+18,128,5);}shirt.map=new T.CanvasTexture(c);shirt.map.colorSpace=T.SRGBColorSpace;for(let k=0;k<5;k++)sphere(.013,mat('#ece8da'),avatar,0,1.55-k*.09,.27);}
  if(isKomar){hairTop.position.set(0,.2,-.04);hairTop.scale.set(.94,.4,.87);for(const side of [-1,1]){const frame=mat('#3b3028',.4);const lens=new T.MeshPhysicalMaterial({color:'#c3c4b1',transparent:true,opacity:.15,roughness:.12});for(const y of [-.018,.098])box(.195,.018,.022,frame,head,side*.112,y,.286);for(const x of [-.095,.095])box(.018,.12,.022,frame,head,side*.112+x,.04,.286);box(.17,.09,.012,lens,head,side*.112,.04,.29);box(.018,.02,.19,frame,head,side*.217,.05,.19);const collar=box(.14,.14,.022,shirt,avatar,side*.075,1.64,.25);collar.rotation.z=side*.4;box(.19,.085,.14,mat('#eee5cf'),avatar,side*.36,1.57,.34);}box(.05,.02,.023,black,head,0,.055,.291);box(.017,.48,.025,mat('#b8ad91'),avatar,0,1.36,.26);for(let j=0;j<5;j++)sphere(.012,mat('#f2eddf'),avatar,0,1.55-j*.09,.281);}
  if(isCindy){
@@ -131,8 +132,8 @@ function createAvatar(character,i){
  if(isWargo){for(const side of [-1,1]){const sideHair=sphere(.12,hair,head,side*.263,.075,-.035);sideHair.scale.set(.35,1.5,.95)}}else if(!character&&i%3===1){sphere(.16,hair,head,0,.16,-.24)}
  sphere(.065,skin,head,-.255,0,0);sphere(.065,skin,head,.255,0,0);const nose=sphere(isCindy?.041:.058,skin,head,0,-.035,.255);if(isCindy){nose.scale.set(.8,1,.8);for(const side of [-1,1]){const cheek=sphere(.055,mat('#d69b87'),head,side*.16,-.072,.218);cheek.scale.set(1,.55,.22);}}
  for(const x of [-.1,.1]){const eye=sphere(.047,mat('#ede8d8'),head,x,.025,.235);const iris=sphere(isCindy?.019:.022,isCindy?mat('#4f5740'):black,head,x,.025,.274);const brow=box(isCindy?.075:.09,isCindy?.012:.025,.025,hair,head,x,.115,.25);brow.rotation.z=x<0?.1:-.1;if(isCindy){eye.scale.set(.9,.48,.45);iris.scale.set(.95,.85,.4);const lash=box(.075,.008,.012,mat('#40352d'),head,x,.052,.268);lash.rotation.z=x<0?.07:-.07;}}
- const mouth=isWargo||isRose||isMartens||isRueben||isCindy||isColman||isRecker||isWilkins||isDauenheimer?mesh(new T.TorusGeometry(.085,.013,8,24,Math.PI),mat('#6b3d32'),head,0,-.135,.282):box(.11,.023,.025,mat('#663a2c'),head,0,-.14,.247);
- if(isRose||isMartens||isRueben||isCindy||isColman||isRecker||isWilkins||isDauenheimer){mouth.rotation.z=Math.PI;box(.12,.024,.014,mat('#f1e8da'),head,0,-.154,.286);}
+ const mouth=isTubby||isWargo||isRose||isMartens||isRueben||isCindy||isColman||isRecker||isWilkins||isDauenheimer?mesh(new T.TorusGeometry(.085,.013,8,24,Math.PI),mat('#6b3d32'),head,0,-.135,.282):box(.11,.023,.025,mat('#663a2c'),head,0,-.14,.247);
+ if(isTubby||isRose||isMartens||isRueben||isCindy||isColman||isRecker||isWilkins||isDauenheimer){mouth.rotation.z=Math.PI;box(.12,.024,.014,mat('#f1e8da'),head,0,-.154,.286);}
  if(isWargo){mouth.rotation.z=Math.PI;box(.12,.023,.015,mat('#e7dbc7'),head,0,-.155,.288);for(const side of [-1,1]){box(.22,.135,.035,mat('#171b1b',.14,.16),head,side*.124,.036,.29);box(.025,.035,.22,black,head,side*.255,.046,.19)}box(.06,.03,.03,black,head,0,.05,.3);}
 
  if(!character&&(i===2||i===6)){const glasses=brass;for(const x of [-.1,.1]){const r=mesh(new T.TorusGeometry(.07,.012,6,20),glasses,head,x,.03,.28)}box(.06,.012,.012,glasses,head,0,.03,.28)}
@@ -177,10 +178,11 @@ function createCompanion(character){
  const {avatar}=createAvatar(SUPPORTING_CHARACTERS.cindy,0);avatar.name='Cindy · Graham’s companion';avatar.position.set(.34,.12,-.92);avatar.userData.supporting=true;return avatar;
 }
 const pongActors=[];
-export function setPongPlayers(left='wargo',right='heard'){
+export function setPongPlayers(){
+ const chosen=choosePongCast(people.map(p=>p.characterId));
  pong.add(p1,p2);for(const actor of pongActors){pong.remove(actor.avatar);actor.avatar.traverse(o=>o.geometry?.dispose())}pongActors.length=0;
- for(const [j,id] of [left,right].entries()){
-  const actor=createAvatar(CHARACTERS[id]||CHARACTERS.wargo,j+1),side=j===0?-1:1;actor.avatar.position.set(side*3.02,0,0);actor.avatar.rotation.y=-side*Math.PI/2;pong.add(actor.avatar);const companion=createCompanion(CHARACTERS[id]);if(companion)actor.avatar.add(companion);
+ for(const [j,id] of chosen.entries()){
+  const actor=createAvatar(CHARACTERS[id]||CHARACTERS.wargo,j+1),side=j===0?-1:1;actor.avatar.position.set(side*3.02,0,0);actor.avatar.rotation.y=-side*Math.PI/2;actor.avatar.userData.characterId=id;pong.add(actor.avatar);const companion=createCompanion(CHARACTERS[id]);if(companion)actor.avatar.add(companion);
   const hand=actor.avatar.userData.hands[j===0?1:0],racket=j===0?p1:p2;hand.add(racket);racket.position.set(0,.22,.09);racket.rotation.set(0,Math.PI/2,0);
   pongActors.push({...actor,hand,side});
  }
@@ -197,7 +199,7 @@ export function seatPlayers(n){for(const p of people){scene.remove(p.group);p.la
  const label=document.createElement('div');label.className='seat-label'+(i===0?' you':'');label.textContent=i===0?'YOU':character?.name||names[i];labels.append(label);
  const ring=mesh(new T.TorusGeometry(.48,.025,8,48),new T.MeshBasicMaterial({color:'#d5e79f',transparent:true,opacity:0}),g,0,.06,0);ring.rotation.x=Math.PI/2;
  people.push({group:g,avatar,companion,characterId:character?.id,chairSeat,chairBack,away:false,head,mouth,ring,label,name:character?.name||names[i],seed:i*1.6,beerCup,fill:1,flags:0,crushedCount:0,flagMarker:null,drinkUntil:0});
-}active=-1;resize();}
+}active=-1;setPongPlayers();resize();}
 
 export function clearFlags(){for(let i=0;i<people.length;i++){const p=people[i];if(p.flagMarker){p.group.remove(p.flagMarker);p.flagMarker.traverse(o=>{if(o.geometry)o.geometry.dispose()});p.flagMarker=null}p.flags=0;p.crushedCount=0;p.label.textContent=p.away?p.name+' ◇':i===0?'YOU':p.name;}}
 export function playerDrinks(i,{flag=false,chug=false}={}){
@@ -244,4 +246,4 @@ function animate(t){requestAnimationFrame(animate);if(document.hidden||!mount.cl
  const cycle=sec*1.25,swing=Math.sin(cycle);ball.position.set(swing*2.43,1.72+Math.abs(Math.cos(cycle))*.65,Math.sin(cycle*2)*.22);
  for(const actor of pongActors){const hit=Math.pow(Math.max(0,-actor.side*swing),12);actor.hand.position.x=(actor.side<0?1:-1)*.38+Math.sin(cycle*2)*.15;actor.hand.rotation.x=-.1+hit*.3;actor.head.rotation.y=Math.sin(cycle)*.1;actor.avatar.rotation.z=actor.side*hit*.035;}
  renderer.render(scene,camera);
-}setPongPlayers();seatPlayers(6);resize();requestAnimationFrame(animate);
+}seatPlayers(6);resize();requestAnimationFrame(animate);

@@ -5,7 +5,7 @@ import {chatterGap,chooseChatter} from './chatter.mjs';
 import {responseDelay} from './timing.mjs';
 import {pickCallout,pickCeremonyCallout} from './callouts.mjs';
 import {unlockSound,setSoundEnabled,playCue} from './sound.js';
-import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,setPongPlayers,refereeSafety} from './scene.js';
+import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety} from './scene.js';
 import {MODES,chooseAlternate,specialGap,modeAnnouncement} from './modes.mjs';
 import {nextStep,validResponse,penaltyFor,keyResponse} from './rules.mjs';
 const $=s=>document.querySelector(s);let count=6,state={actor:0,caller:0,target:0,phase:'number'},running=false,paused=false,muted=false,waiting=false,token=0,passes=0,mistakes=0,round=1,frame=0,started=false,lastLoser=-1,lossStreak=0,speechSerial=0,away=-1,turns=0,bathroomAt=3,returnAt=0,lastCallout='',activeSpeaker=-1,peepBusy=false;
@@ -25,7 +25,7 @@ refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?
 const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
 const pace=()=>options[$('#pace').value];
 let modeId='regular',direction=1,nextSpecial=1+specialGap(),numberDraft='',numberTimer=0,botPending=null,humanPending=null;
-let nextChatter=chatterGap(),lastChatter=-1;
+let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6;
 const mode=()=>({...MODES[modeId],direction});
 const maxCall=()=>count*(MODES[modeId].multiplier||1);
 function clearNumberDraft(){clearTimeout(numberTimer);numberDraft='';}
@@ -50,10 +50,6 @@ function chooseIntroMode(id){
 
 function renderCast(){const container=$('#seat-selects');container.replaceChildren();for(let i=1;i<count;i++){const row=document.createElement('label');row.className='cast-row';const title=document.createElement('span');title.textContent='Chair '+i+(i===1?' · your left':'');row.append(title);const select=document.createElement('select');select.setAttribute('aria-label','Player in chair '+i);const house=document.createElement('option');house.value='house';house.textContent=HOUSE_NAMES[i]+' · house player';select.append(house);for(const character of Object.values(CHARACTERS)){const option=document.createElement('option');option.value=character.id;option.textContent=character.name;select.append(option)}select.value=seatCast[i];select.onchange=()=>{pendingPeepers.clear();paidPeepers.clear();stop();assignCharacter(seatCast,i,select.value);seatPlayers(count);away=-1;turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0;$('#welcome').hidden=false;$('#toast').hidden=true;renderCast();status('CAST YOUR TABLE','Ready when you are.','Your selected players are seated. Pull up a chair to begin.');buttons()};row.append(select);container.append(row);}}
 renderCast();
-
-const pongChoices=['wargo','heard'];try{const saved=JSON.parse(localStorage.getItem('whales-pong-players'));if(Array.isArray(saved))for(let j=0;j<2;j++)if(CHARACTERS[saved[j]])pongChoices[j]=saved[j]}catch{}
-function renderPongCast(){for(const [j,id] of ['#pong-left','#pong-right'].entries()){const select=$(id);select.replaceChildren();for(const character of Object.values(CHARACTERS)){const option=document.createElement('option');option.value=character.id;option.textContent=character.name;select.append(option)}select.value=pongChoices[j];select.onchange=()=>{pongChoices[j]=select.value;setPongPlayers(...pongChoices);try{localStorage.setItem('whales-pong-players',JSON.stringify(pongChoices))}catch{}select.blur()}}setPongPlayers(...pongChoices)}
-renderPongCast();
 
 const keypad=$('#keypad');for(let n=1;n<=18;n++){const b=document.createElement('button');b.className='response';b.dataset.value=n;b.textContent=n;b.setAttribute('aria-label','Call '+n);keypad.append(b)}
 function buttons(){document.querySelectorAll('.response').forEach(b=>b.disabled=!running||paused||state.phase==='restart'||(Number(b.dataset.value)>maxCall()));$('#players').disabled=false;$('#pause').disabled=!running;$('#pause').textContent=paused?'▶ Resume':'Ⅱ Pause';$('#self-num').textContent=count;$('#mobile-start').hidden=running;$('#settings-toggle').disabled=false;}
@@ -141,13 +137,27 @@ async function restartLoser(myToken){
   if(penalty.flag){playCue('flag');await say(shouter,pickCeremonyCallout('flag'),myToken,{ceremony:true});if(!alive())return;}
   else{await wait(1350);if(!alive())return;}
  }
- setCeremony(-1);if(!await bathroomBeat(myToken))return;if(!await chatterBeat(myToken))return;
+ setCeremony(-1);if(!await bathroomBeat(myToken))return;if(!await voluntaryFlagsBeat(myToken))return;if(!await chatterBeat(myToken))return;
  setCeremony(loser,'restart');playCue('restart');ceremonyToast('restart','THE FLOOR IS '+(loser===0?'YOURS.':name.toUpperCase()+"’S."),'Whale’s Tales… calls tales on…');
  await wait(400);if(!alive())return;
  selectRoundMode();if(modeId!=='regular'){playCue('restart');ceremonyToast('alternate',MODES[modeId].name.toUpperCase(),MODES[modeId].description);}
  state={actor:loser,caller:loser,target:loser,phase:'number'};introOpen=loser===0;buttons();
  await announceOpening(loser,modeAnnouncement(modeId,count),myToken);
 
+}
+
+async function voluntaryFlagsBeat(myToken){
+ if(state.phase!=='restart'||myToken!==token||!running||round<nextTubbyFlags||lossStreak>=2)return true;
+ const tubby=people.findIndex((p,i)=>i>0&&i!==state.actor&&p.name==='Tubby'&&!p.away&&i!==away);
+ if(tubby<0||Math.random()>=.07)return true;
+ const alive=()=>myToken===token&&running;
+ const lines=['Flags on me! I’m taking the express lane to a chug.','Voluntary flags! Why wait for talent to let me down?','I’ll take flags. Put me one bad decision from a chug.','Flags on myself! Consider it a down payment.'];
+ setCeremony(tubby,'flag');ceremonyToast('flag','VOLUNTARY FLAGS · TUBBY','He asked for it. His next mistake is a chug; someone else’s mistake clears it.');
+ await say(tubby,lines[Math.floor(Math.random()*lines.length)],myToken,{ceremony:true});if(!alive())return false;
+ clearFlags();lastLoser=tubby;lossStreak=2;nextTubbyFlags=round+12+Math.floor(Math.random()*9);playerDrinks(tubby,{flag:true});playCue('flag');
+ const shouter=people.findIndex((p,i)=>i!==tubby&&i!==away&&!p.away);
+ await say(shouter<0?tubby:shouter,'For God’s sake, get his number! He volunteered!',myToken,{ceremony:true});if(!alive())return false;
+ await wait(700);if(!alive())return false;setCeremony(-1);return true;
 }
 
 async function registerPeep(peeper){
