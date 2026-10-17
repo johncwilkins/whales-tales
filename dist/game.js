@@ -5,7 +5,7 @@ import {chatterGap,chooseChatter} from './chatter.mjs';
 import {responseDelay} from './timing.mjs';
 import {pickCallout,pickCeremonyCallout} from './callouts.mjs';
 import {unlockSound,setSoundEnabled,playCue} from './sound.js';
-import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety,previewAttPose,roundVisuals} from './scene.js';
+import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety,previewSignatureMoves,previewVomit,roundVisuals} from './scene.js';
 import {MODES,chooseAlternate,specialGap,modeAnnouncement} from './modes.mjs';
 import {nextStep,validResponse,penaltyFor,keyResponse} from './rules.mjs';
 const $=s=>document.querySelector(s);let count=6,state={actor:0,caller:0,target:0,phase:'number'},running=false,paused=false,muted=false,waiting=false,token=0,passes=0,mistakes=0,round=1,frame=0,started=false,lastLoser=-1,lossStreak=0,speechSerial=0,away=-1,turns=0,bathroomAt=3,returnAt=0,lastCallout='',activeSpeaker=-1,peepBusy=false;
@@ -32,7 +32,7 @@ refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?
 const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
 const pace=()=>options[$('#pace').value];
 let modeId='regular',direction=1,nextSpecial=1+specialGap(),numberDraft='',numberTimer=0,botPending=null,humanPending=null;
-let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5;
+let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5,nextVomitRound=10;
 const mode=()=>({...MODES[modeId],direction});
 const maxCall=()=>count*(MODES[modeId].multiplier||1);
 function clearNumberDraft(){clearTimeout(numberTimer);numberDraft='';}
@@ -96,6 +96,12 @@ async function chatterBeat(myToken){
  return true;
 }
 
+async function rareVomitBeat(myToken){
+ if(myToken!==token||!running||state.phase!=='restart'||round<nextVomitRound||Math.random()>=.035)return true;
+ const result=previewVomit();if(!result)return true;nextVomitRound=round+25+Math.floor(Math.random()*16);
+ await wait(result.duration);return myToken===token&&running;
+}
+
 async function tubbyMexicanBeat(turn,myToken){
  if(myToken!==token||!running||paused||state!==turn||turn.phase==='restart'||turn.actor===0||turn.actor===away||people[turn.actor]?.name!=='Tubby'||round<nextTubbyMexican||Math.random()>=.025)return false;
  nextTubbyMexican=round+10+Math.floor(Math.random()*9);
@@ -153,7 +159,7 @@ async function restartLoser(myToken){
   if(penalty.flag){playCue('flag');await say(shouter,pickCeremonyCallout('flag'),myToken,{ceremony:true});if(!alive())return;}
   else{await wait(1350);if(!alive())return;}
  }
- setCeremony(-1);if(!await bathroomBeat(myToken))return;if(!await voluntaryFlagsBeat(myToken))return;if(!await chatterBeat(myToken))return;
+ setCeremony(-1);if(!await rareVomitBeat(myToken))return;if(!await bathroomBeat(myToken))return;if(!await voluntaryFlagsBeat(myToken))return;if(!await chatterBeat(myToken))return;
  setCeremony(loser,'restart');playCue('restart');ceremonyToast('restart','THE FLOOR IS '+(loser===0?'YOURS.':name.toUpperCase()+"’S."),'Whale’s Tales… calls tales on…');
  await wait(400);if(!alive())return;
  selectRoundMode();if(modeId!=='regular'){playCue('restart');ceremonyToast('alternate',MODES[modeId].name.toUpperCase(),MODES[modeId].description);}
@@ -195,7 +201,7 @@ async function respond(value){if(!running||paused||state.phase==='restart'||peep
  updatePrompt();buttons();await speaking;if(myToken===token&&running&&!paused&&state===next)pump(myToken)}
 async function startRound(){pendingPeepers.clear();paidPeepers.clear();unlockSound();speechChannel?.resume();if(started)round++;started=true;stop();count=Number($('#players').value);if(people.length!==count){seatPlayers(count);away=-1;turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0}const opener=1;state={actor:opener,caller:opener,target:opener,phase:'number'};running=true;selectRoundMode();$('#welcome').hidden=true;$('#toast').hidden=true;stats();buttons();const myToken=token;status('THE ROUND IS STARTING',people[opener].name+' opens.',"Listen to the opening number. You’ll be prompted when it’s your turn.");setActive(opener);introOpen=false;await announceOpening(opener,"I’ll start. "+(modeId==='regular'?"Whale’s Tales. Prince of Wales calls tales on…":modeAnnouncement(modeId,count)),myToken)}
 $('#start').onclick=startRound;$('#mobile-start').onclick=startRound;$('#new-round').onclick=startRound;document.querySelectorAll('.response').forEach(b=>b.onclick=()=>respond(b.dataset.value));
-document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewAttPose())$('#last').textContent='Choose Att for a chair to preview his pose with I.';return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
+document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewSignatureMoves())$('#last').textContent='Seat a player with a signature move to preview it with I.';return;}if(e.key.toLowerCase()==='b'){e.preventDefault();previewVomit();return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
  const introMode={y:'olympic',r:'reverse',o:'oscillating',m:'modulus'}[e.key.toLowerCase()];if(introMode&&introOpen&&running&&!paused&&state.actor===0&&state.phase==='number'){e.preventDefault();chooseIntroMode(introMode);return}
  if(modeId==='modulus'&&running&&!paused&&state.phase!=='restart'){
   if(e.key==='Enter'&&numberDraft){e.preventDefault();respond(numberDraft);return}

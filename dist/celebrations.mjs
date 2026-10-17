@@ -54,7 +54,7 @@ export function attachGeneralRig(avatar,shirt){
  const hidden=avatar.children.filter(o=>o!==uniform&&o.isMesh&&(o.position.y<.95||o.material?.color?.getHexString()==='eee5cf'));
  uniform.visible=false;const r={uniform,hidden,shirt,restColor:shirt.color.clone(),restY:avatar.position.y,start:0,until:0};avatar.userData.generalRig=r;return r;
 }
-export function startGeneral(avatar,time){const r=avatar.userData.generalRig;if(!r)return false;r.restY=avatar.position.y;r.start=time;r.until=time+15000;return true;}
+export function startGeneral(avatar,time){const r=avatar.userData.generalRig;if(!r)return false;if(time>=r.until)r.restY=avatar.position.y;r.start=time;r.until=time+15000;return true;}
 export function updateGeneralPose(avatar,time){const r=avatar.userData.generalRig;if(!r)return;const amount=time>=r.start&&time<r.until?Math.max(0,Math.min(1,(time-r.start)/550,(r.until-time)/450)):0;r.uniform.visible=amount>.04;avatar.position.y=r.restY+amount*.45;r.shirt.color.copy(r.restColor).lerp(new T.Color('#3e4934'),amount);for(const piece of r.hidden)piece.visible=amount<.04;}
 
 export function attachHairFire(head){const fire=new T.Group();fire.name='Martens’s hair flare-up';head.add(fire);fire.position.set(0,.28,0);fire.visible=false;const orange=new T.MeshBasicMaterial({color:'#f26a18'}),yellow=new T.MeshBasicMaterial({color:'#ffe47c'});for(let j=0;j<5;j++){const flame=new T.Group();fire.add(flame);flame.position.set((j-2)*.083,0,Math.sin(j*2)*.065);const profile=[[0,0],[.055,.015],[.072,.08],[.04,.2],[.018,.3],[0,.4]].map(([r,y])=>new T.Vector2(r,y));part(flame,new T.LatheGeometry(profile,10),orange);const core=part(flame,new T.LatheGeometry(profile,10),yellow,0,0,.025);core.scale.set(.56,.65,.56);}head.userData.hairFire={fire,start:0,until:0,next:0};return fire;}
@@ -75,3 +75,5 @@ export function updateAttPose(avatar,time){
  const delta=targets[j].clone().sub(elbows[j]),forearm=r.forearms[j];forearm.visible=amount>.04;forearm.position.copy(elbows[j]).add(hand.position).multiplyScalar(.5);forearm.scale.y=delta.length();forearm.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),hand.position.clone().sub(elbows[j]).normalize());
  }
 }
+
+export function runSignatureMoves(actors,time){let triggered=0;for(const p of actors){if(p.away)continue;let did=false;const a=p.avatar;if(a.userData.safetyRig){a.userData.safetyRig.start=time;a.userData.safetyRig.until=time+3000;did=true;}if(a.userData.celebrationRig){a.userData.celebrationRig.until=0;startCelebration(a,time,5000);did=true;}if(a.userData.generalRig){startGeneral(a,time);a.userData.generalRig.until=time+5000;did=true;}if(a.userData.attRig){startAttPose(a,time,4000);did=true;}if(p.head?.userData.hairFire){p.head.userData.hairFire.next=0;startHairFire(p.head,time);did=true;}if(did)triggered++;}return triggered;}

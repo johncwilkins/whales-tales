@@ -1,4 +1,7 @@
 export const CHARACTERS={
+ tichanski:{id:'tichanski',name:'Tichanski',description:'Thick short dark-brown hair, broad smile, pale-blue striped dress shirt and yellow patterned tie',shirt:'#b4c8d1',skin:'#d7ae97',hair:'#40372b'},
+ bell:{id:'bell',name:'Bell',description:'Red baseball cap, thin silver glasses, broad smile, navy polo over white undershirt',shirt:'#354f69',skin:'#d3ae99',hair:'#938b78'},
+ sapperstien:{id:'sapperstien',name:'Sapperstien',description:'Receding brown hair, short salt-and-pepper beard, green checked button-down',shirt:'#5c7767',skin:'#c89f86',hair:'#655d51'},
  wargo:{id:'wargo',name:'Wargo',description:'Floppy olive outback hat, gray hair, black sunglasses, burgundy tee, khaki shorts',shirt:'#722c3d',skin:'#d5a085',hair:'#777b78'},
  pekalsky:{id:'pekalsky',name:'Pekalsky',description:'Thick dark hair, green Squam Lakes sweatshirt, blue jeans',shirt:'#405549',skin:'#cca081',hair:'#302a25'},
  saunders:{id:'saunders',name:'Saunders',description:'Blue C baseball cap, beige Henley, coral shorts',shirt:'#bcb39e',skin:'#c79a78',hair:'#5e4835'},
