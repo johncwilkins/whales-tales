@@ -4,7 +4,7 @@ import {rankVoices,selectVoice} from './voices.mjs';
 import {chatterGap,chooseChatter} from './chatter.mjs';
 import {responseDelay} from './timing.mjs';
 import {pickCallout,pickCeremonyCallout} from './callouts.mjs';
-import {unlockSound,setSoundEnabled,playCue} from './sound.js';
+import {unlockSound,setSoundEnabled,playCue,playBelch,stopBelch} from './sound.js';
 import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety,previewSignatureMoves,previewVomit,previewStickDance,previewAirTed,roundVisuals} from './scene.js';
 import {MODES,chooseAlternate,specialGap,modeAnnouncement} from './modes.mjs';
 import {nextStep,validResponse,penaltyFor,keyResponse} from './rules.mjs';
@@ -33,7 +33,7 @@ refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?
 const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
 const pace=()=>options[$('#pace').value];
 let modeId='regular',direction=1,nextSpecial=1+specialGap(),numberDraft='',numberTimer=0,botPending=null,humanPending=null;
-let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5,nextVomitRound=10;
+let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5,nextVomitRound=10,nextBelchTurn=12;
 const mode=()=>({...MODES[modeId],direction});
 const maxCall=()=>count*(MODES[modeId].multiplier||1);
 function clearNumberDraft(){clearTimeout(numberTimer);numberDraft='';}
@@ -66,17 +66,18 @@ function stats(){$('#passes').textContent=passes;$('#mistakes').textContent=mist
 function status(tag,title,detail){$('#status-tag').textContent=tag;$('#prompt').textContent=title;$('#detail').textContent=detail}
 function updatePrompt(){const goldenCount=state.actor===0&&state.phase==='number'&&state.numberOrigin!==undefined&&state.numberOrigin!==0;$('#count-origin').textContent=goldenCount?'Count '+(direction===1?'clockwise':'counterclockwise')+' from '+people[state.numberOrigin].name+'’s empty chair.':'Count '+(direction===1?'clockwise':'counterclockwise')+' from the caller.';$('#count-ending').textContent=goldenCount?' to call the golden chair again.':' to call yourself.';const guide=$('#guide').checked;const person=people[state.actor]?.name||'Player';setActive(guide?state.actor:-1);if(state.actor===0){status('YOUR TURN',guide?(state.phase==='number'?'Call a number.':state.phase==='nay'?'Say “Nay!”':'Say “Who?”'):'You’re up.',guide?(state.phase==='number'?`${state.numberOrigin!==undefined&&state.numberOrigin!==0?'Count from '+people[state.numberOrigin].name+'’s golden chair. Its '+(direction===1?'left':'right')+' neighbor is 1.':'Choose 1–'+maxCall()+'. Your '+(direction===1?'left':'right')+' is 1. '+count+' calls yourself.'}`:state.phase==='nay'?`${state.goldenChair>=0?'Golden chair! You cover '+people[state.goldenChair].name:people[state.caller].name==='You'?'You called yourself':people[state.caller].name+' called you'}. ${state.calledNumber?'Call '+state.calledNumber+' landed on your chair. ':''}Answer with ${keyboardLayout==='as'?'A':'Spacebar'} or the Nay button.`:`${state.target===0?'You':people[state.target].name} said Nay. Ask Who with ${keyboardLayout==='as'?'S':'Down Arrow'} or the Who button.`):'Follow the calls. Nay, Who, or a number?')}else status(selfGolden?'GOLDEN CHAIR · WATCHING':'AROUND THE TABLE',guide?`${person}’s turn.`:'Listen closely.',guide?(state.phase==='number'?`${person} is choosing the next number.`:state.phase==='nay'?state.goldenChair>=0?`${person} covers ${people[state.goldenChair].name}’s golden chair.`:`${person} answers the call.`:`${person} asks “Who?”`):'Follow the voices and speech bubbles.');if(introOpen&&state.actor===0){$('#detail').textContent='Before your opening number: Y = Olympic · R = reverse · O = oscillating · M = modulus.';}}
 const wait=async ms=>{await new Promise(r=>setTimeout(r,ms));await untilResumed()};
-async function say(i,text,myToken,{opening=false,ceremony=false,selfCall=false,onStart}={}){
+async function say(i,text,myToken,{opening=false,ceremony=false,selfCall=false,onStart,belch=false}={}){
  if(myToken!==token)return;const speechId=++speechSerial;
  const rate=mobileDevice()?(ceremony?1: selfCall?1.75:opening?1.4:MODES[modeId].olympic?1.65:Math.max(1.3,pace().rate)):(ceremony?(/get his number/i.test(text)?1.05:1.12):selfCall?1.85:opening?1.5:MODES[modeId].olympic?1.8:pace().rate);
  const shortMobile=mobileDevice()&&!opening&&!ceremony&&/^(?:\d+|Nay!|Who\?)$/.test(text),mobileBudget=Number(text)>=10?700:550;
- const duration=Math.max(150,text.length*55/rate);let began=false;const begin=()=>{if(began||myToken!==token||speechId!==speechSerial)return;began=true;activeSpeaker=i;showBubble(i,text,duration+1800);$('#last').textContent=`${people[i].name}: “${text}”`;onStart?.();};
- if(muted||!speechChannel){begin();await wait(Math.min(duration,1200));}
+ const duration=Math.max(150,text.length*55/rate);let began=false;const begin=()=>{if(began||myToken!==token||speechId!==speechSerial)return;began=true;activeSpeaker=i;showBubble(i,belch?'Buuurp!':text,duration+1800);$('#last').textContent=`${people[i].name}: “${belch?'Buuurp!':text}”`;onStart?.();};
+ if(belch){if(!muted)playBelch();begin();await wait(520);}
+ else if(muted||!speechChannel){begin();await wait(Math.min(duration,1200));}
  else{const voice=selectVoice(voices(),i,$('#voice').value||'auto',{single:mobileDevice()});await speechChannel.speak(text,{...(voice?{voice}:{}),rate,pitch:1,volume:1,onStart:begin,...(shortMobile?{maxDuration:mobileBudget,maxStartDelay:900}:{})});await untilResumed();if(myToken!==token||speechId!==speechSerial)return;begin();}
  await untilResumed();if(myToken===token&&speechId===speechSerial){activeSpeaker=-1;setTalking(-1);}
 }
 
-function stop(){introOpen=false;introRevision++;announcementState=null;releasePause();humanSince=null;pressure=null;clearNumberDraft();botPending=null;humanPending=null;activeSpeaker=-1;peepBusy=false;token++;speechSerial++;running=false;paused=false;waiting=false;cancelAnimationFrame(frame);$('#timer-fill').style.width='0';speechChannel?.cancel();clearBubble();setActive(-1);setCeremony(-1);buttons()}
+function stop(){stopBelch();introOpen=false;introRevision++;announcementState=null;releasePause();humanSince=null;pressure=null;clearNumberDraft();botPending=null;humanPending=null;activeSpeaker=-1;peepBusy=false;token++;speechSerial++;running=false;paused=false;waiting=false;cancelAnimationFrame(frame);$('#timer-fill').style.width='0';speechChannel?.cancel();clearBubble();setActive(-1);setCeremony(-1);buttons()}
 function humanTurn(myToken){if(humanPending===state&&waiting)return;humanPending=state;humanSince=performance.now();waiting=true;buttons();const duration=MODES[modeId].olympic?({easy:1800,normal:1300,fast:1000,blitz:750}[$('#pace').value]):pace().limit;const deadline=performance.now()+duration,turn=state;function tick(){if(myToken!==token||!waiting||paused||state!==turn||humanPending!==turn)return;if(duration){const left=deadline-performance.now();$('#timer-fill').style.width=Math.max(0,left/duration*100)+'%';if(left<=0){fail(0,state.phase==='nay'?'Silence! No Nay.':MODES[modeId].olympic?'Sundial tails! Olympic numbers must be quick.':'Time’s up.');return}}frame=requestAnimationFrame(tick)}tick()}
 const goldenReasons=['Off to the bathroom.','I have to blow.','Got to call my girlfriend.','My bladder just called a meeting.','Going to see a man about a urinal.','The beer has reached its final destination.','Need to go drain the holding tank.','My kidneys have filed a complaint.','Got to return this rental beer.','My girlfriend wants proof I’m still alive.','Going to check if the bathroom has a better counting game.','Nature just sent a second reminder.','I need a minute with the porcelain committee.','Taking this beer on its final voyage.','The downstairs department needs immediate attention.','Got to go negotiate with my bladder.'];let lastGoldenReason=goldenReasons[2];
 async function bathroomBeat(myToken){
@@ -126,8 +127,9 @@ async function pump(myToken,{openingNumber=false}={}){if(myToken!==token||!runni
   return;
  }
  let value=turn.phase;if(turn.phase==='number')value=Math.random()<.35?(((direction*(0-(turn.numberOrigin??turn.actor)))%count+count)%count||count):1+Math.floor(Math.random()*maxCall());
+ const belch=turn.phase==='nay'&&turns>=nextBelchTurn&&Math.random()<.03;if(belch)nextBelchTurn=turns+24+Math.floor(Math.random()*24);
  let next=null;
- await say(turn.actor,turn.phase==='number'?String(value):turn.phase==='nay'?'Nay!':'Who?',myToken,{selfCall:turn.caller===turn.target,onStart:()=>{
+ await say(turn.actor,turn.phase==='number'?String(value):turn.phase==='nay'?'Nay!':'Who?',myToken,{belch,selfCall:turn.caller===turn.target,onStart:()=>{
   if(!live())return;advance(value);next=state;updatePrompt();if(state.actor===0)pump(myToken);
  }});
  if(myToken===token&&running&&!paused&&state===next&&state.actor!==0)pump(myToken);
@@ -196,8 +198,8 @@ async function registerPeep(peeper){
  playerDrinks(peeper,{});paidPeepers.add(peeper);await wait(1350);if(myToken!==token||!running)return;
  peepBusy=false;setCeremony(-1);$('#toast').hidden=true;if(document.hidden){paused=true;buttons();status('TAKING A BREATHER','Round paused.','Resume when you’re ready.');return}buttons();pump(myToken);
 }
-async function respond(value){if(selfGolden||!running||paused||state.phase==='restart'||peepBusy)return;clearNumberDraft();if(value==='who'&&state.phase==='nay'&&state.caller===0&&state.actor!==0){fail(0,'Quick Who! You jumped the Nay.');return}if(value==='nay'&&state.actor!==0&&state.phase==='nay'){registerPeep(0);return}if(state.actor!==0){fail(0,value==='nay'?'Peepage! Nay was not yours.':'You spoke out of turn.');return}if(!validResponse(state.phase,value,maxCall())){fail(0,value==='nay'?'Peepage! Nay was not yours.':`You said ${value==='who'?'Who':value}.`);return}const elapsed=humanSince===null?Infinity:performance.now()-humanSince,points=elapsed<=500?3:elapsed<=1000?2:elapsed<=1800?1:0,numberCall=state.phase==='number';quickPoints+=points;$('#speed-bonus').textContent=quickPoints?(points?'QUICK +'+points+' · ':'')+quickPoints+' quick pts':'';humanSince=null;waiting=false;cancelAnimationFrame(frame);$('#timer-fill').style.width='0';passes++;stats();buttons();const myToken=token;const phrase=state.phase==='number'?String(value):value==='nay'?'Nay!':'Who?';
- advance(value);if(numberCall&&points&&state.actor!==0)pressure={seat:state.actor,extra:points*.1};const next=state;const speaking=say(0,phrase,myToken,{selfCall:state.caller===state.target});
+async function respond(value,{belch=false}={}){if(selfGolden||!running||paused||state.phase==='restart'||peepBusy)return;clearNumberDraft();if(value==='who'&&state.phase==='nay'&&state.caller===0&&state.actor!==0){fail(0,'Quick Who! You jumped the Nay.');return}if(value==='nay'&&state.actor!==0&&state.phase==='nay'){registerPeep(0);return}if(state.actor!==0){fail(0,value==='nay'?'Peepage! Nay was not yours.':'You spoke out of turn.');return}if(!validResponse(state.phase,value,maxCall())){fail(0,value==='nay'?'Peepage! Nay was not yours.':`You said ${value==='who'?'Who':value}.`);return}const elapsed=humanSince===null?Infinity:performance.now()-humanSince,points=elapsed<=500?3:elapsed<=1000?2:elapsed<=1800?1:0,numberCall=state.phase==='number';quickPoints+=points;$('#speed-bonus').textContent=quickPoints?(points?'QUICK +'+points+' · ':'')+quickPoints+' quick pts':'';humanSince=null;waiting=false;cancelAnimationFrame(frame);$('#timer-fill').style.width='0';passes++;stats();buttons();const myToken=token;const phrase=state.phase==='number'?String(value):value==='nay'?'Nay!':'Who?';
+ advance(value);if(numberCall&&points&&state.actor!==0)pressure={seat:state.actor,extra:points*.1};const next=state;const speaking=say(0,phrase,myToken,{belch:belch&&value==='nay',selfCall:state.caller===state.target});
  if(state.actor===0){pump(myToken);return}
  updatePrompt();buttons();await speaking;if(myToken===token&&running&&!paused&&state===next)pump(myToken)}
 async function startRound(){pendingPeepers.clear();paidPeepers.clear();unlockSound();speechChannel?.resume();if(started)round++;started=true;stop();count=Number($('#players').value);if(people.length!==count){seatPlayers(count);away=selfGolden?0:-1;if(selfGolden)setAway(0,true);turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0}const opener=1;state={actor:opener,caller:opener,target:opener,phase:'number'};running=true;selectRoundMode();$('#welcome').hidden=true;$('#toast').hidden=true;stats();buttons();const myToken=token;status('THE ROUND IS STARTING',people[opener].name+' opens.',"Listen to the opening number. You’ll be prompted when it’s your turn.");setActive(opener);introOpen=false;await announceOpening(opener,"I’ll start. "+(modeId==='regular'?"Whale’s Tales. Prince of Wales calls tales on…":modeAnnouncement(modeId,count)),myToken)}
@@ -220,6 +222,7 @@ $('#golden-chair').onchange=()=>{
 
 $('#start').onclick=startRound;$('#mobile-start').onclick=startRound;$('#new-round').onclick=startRound;document.querySelectorAll('.response').forEach(b=>b.onclick=()=>respond(b.dataset.value));
 document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewSignatureMoves())$('#last').textContent='Seat a player with a signature move to preview it with I.';return;}if(e.key.toLowerCase()==='t'){e.preventDefault();previewAirTed();return;}if(e.key.toLowerCase()==='f'){e.preventDefault();previewStickDance();return;}if(e.key.toLowerCase()==='b'){e.preventDefault();previewVomit();return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
+ if(e.key.toLowerCase()==='q'){e.preventDefault();respond('nay',{belch:true});return;}
  const introMode={y:'olympic',r:'reverse',o:'oscillating',m:'modulus'}[e.key.toLowerCase()];if(introMode&&introOpen&&running&&!paused&&state.actor===0&&state.phase==='number'){e.preventDefault();chooseIntroMode(introMode);return}
  if(modeId==='modulus'&&running&&!paused&&state.phase!=='restart'){
   if(e.key==='Enter'&&numberDraft){e.preventDefault();respond(numberDraft);return}
@@ -228,7 +231,7 @@ document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.alt
  }
  const value=keyResponse(e.key,keyboardLayout);if(value===null)return;e.preventDefault();respond(value)});
 $('#pause').onclick=()=>{if(!running)return;clearNumberDraft();paused=!paused;waiting=false;humanPending=null;cancelAnimationFrame(frame);$('#timer-fill').style.width='0';
- if(paused){pauseSnapshot=[$('#status-tag').textContent,$('#prompt').textContent,$('#detail').textContent];speechChannel?.cancel();clearBubble();setActive(-1);status('TAKING A BREATHER','Round paused.','Talking stopped. Resume when you’re ready.');}
+ if(paused){stopBelch();pauseSnapshot=[$('#status-tag').textContent,$('#prompt').textContent,$('#detail').textContent];speechChannel?.cancel();clearBubble();setActive(-1);status('TAKING A BREATHER','Round paused.','Talking stopped. Resume when you’re ready.');}
  else{unlockSound();speechChannel?.resume();if(pauseSnapshot)status(...pauseSnapshot);releasePause();if(state.phase!=='restart'&&!peepBusy&&state!==announcementState)pump(token);}
  buttons();};
 function setMuted(value){muted=value;setSoundEnabled(!muted);$('#audio-enabled').checked=!muted;$('#preview-voice').disabled=muted;$('#sound').textContent=muted?'◖ Sound off':'◖ Sound on';$('#sound').setAttribute('aria-pressed',String(!muted));persistSettings();if(muted)speechChannel?.cancel();else{unlockSound();speechChannel?.resume();}}
