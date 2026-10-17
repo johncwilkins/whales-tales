@@ -25,8 +25,8 @@ Tests cover counting for 2–9 players, reverse/modulus/oscillating/Olympic rule
 ## Controls and opening
 
 - A or Space: Nay.
-- Down Arrow: Who.
-- S: preview Att’s pose.
+- S or Down Arrow: Who.
+- I: preview Att’s pose.
 - Number row/numeric keypad or onscreen number buttons: call a number.
 - Pause works during play and ceremonies and stops speech immediately.
 - Help explains all rules and pauses automatically.
@@ -86,4 +86,6 @@ Tubby rarely opts out of an expected response with “Mexican!” and immediatel
 
 Player menus list names alphabetically. When Tubby says “Mexican!”, the table calls him out for playing the wrong game.
 
-Att poses on chugs with his left hand behind his neck and right arm extended upward at 45 degrees. S previews the pose immediately when Att is seated or playing pong, even while paused. Down Arrow remains Who.
+Att poses on chugs with his left hand behind his neck and right arm extended upward at 45 degrees. I previews the pose immediately when Att is seated or playing pong, even while paused. S and Down Arrow remain Who.
+
+Player count, chosen cast, pace, guide, bubbles, sound and controls-only mode persist on this browser. Camera view is remembered. Cindy and Rooks’s smoker choose a visible chair-side spot when the view changes. Martens’s five-second hair flare is scheduled early and recurs occasionally.
