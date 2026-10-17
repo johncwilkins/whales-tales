@@ -19,12 +19,30 @@ export function createCruiser(){
 }
 export function createTube(parent,avatar,index){const group=new T.Group();group.name='Inner-tube swimmer';parent.add(group);group.position.set(index?6.8:-6.8,-.45,-2.7-index*2);group.rotation.y=index?-.7:.7;avatar.removeFromParent();avatar.position.set(0,-.76,0);avatar.rotation.set(0,0,0);group.add(avatar);const tube=part(group,new T.TorusGeometry(.64,.22,12,32),index?'#e5ae47':'#498da6',0,.22,0);tube.rotation.x=Math.PI/2;return {group,avatar};}
 export function createAirTed(){const group=new T.Group();group.name='Air Ted flyby';group.visible=false;
- const body=part(group,new T.CylinderGeometry(.16,.24,2.2,12),'#e6ded0');body.rotation.z=Math.PI/2;box(group,1,.08,3.5,'#d23e37',-.15,.08,0);box(group,.65,.07,1.3,'#e6ded0',.88,.14,0);box(group,.45,.65,.07,'#d23e37',.83,.32,0);const prop=box(group,.05,1.05,.06,'#202c31',-1.16,0,0);
- box(group,2.6,.035,.025,'#62635a',2.4,0,0);
+ const enamel=new T.MeshStandardMaterial({color:'#e9e4da',roughness:.32,metalness:.35});
+ const crimson=new T.MeshStandardMaterial({color:'#a82c2a',roughness:.3,metalness:.3});
+ const aluminum=new T.MeshStandardMaterial({color:'#9ca6aa',roughness:.28,metalness:.85});
+ const glass=new T.MeshPhysicalMaterial({color:'#304f60',roughness:.12,metalness:.35,clearcoat:1,transparent:true,opacity:.88});
+ const fuselage=part(group,new T.LatheGeometry([new T.Vector2(0,-1.54),new T.Vector2(.14,-1.47),new T.Vector2(.23,-1.2),new T.Vector2(.28,-.75),new T.Vector2(.27,-.2),new T.Vector2(.2,.4),new T.Vector2(.095,1.12),new T.Vector2(.04,1.48),new T.Vector2(0,1.54)],28),enamel);fuselage.rotation.z=-Math.PI/2;fuselage.name='Tapered painted aluminum fuselage';
+ const cockpit=part(group,new T.SphereGeometry(1,24,12),glass,-.38,.22,0);cockpit.scale.set(.51,.25,.23);cockpit.name='Glazed cockpit canopy';
+ for(const x of [-.73,-.16]){const frame=part(group,new T.TorusGeometry(.23,.012,6,24),aluminum,x,.22,0);frame.rotation.y=Math.PI/2;frame.scale.y=1.1;}
+ // Beveled, tapered wings catch the room light rather than reading as flat blocks.
+ function airfoil(name,span,chord,x,y,material){const outline=new T.Shape();outline.moveTo(-chord*.5,0);outline.lineTo(-chord*.4,span*.46);outline.quadraticCurveTo(-chord*.34,span*.51,chord*.03,span*.5);outline.lineTo(chord*.45,span*.45);outline.lineTo(chord*.5,0);outline.lineTo(chord*.45,-span*.45);outline.quadraticCurveTo(chord*.03,-span*.53,-chord*.4,-span*.46);outline.closePath();const wing=part(group,new T.ExtrudeGeometry(outline,{depth:.035,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.025,bevelThickness:.012}),material,x,y,0);wing.rotation.x=Math.PI/2;wing.name=name;return wing;}
+ airfoil('Main tapered wing',4.15,.92,-.2,.12,crimson);airfoil('Tail stabilizer',1.42,.55,1.14,.08,enamel);
+ const finShape=new T.Shape();finShape.moveTo(.7,.05);finShape.lineTo(1.17,.69);finShape.quadraticCurveTo(1.38,.76,1.42,.1);finShape.closePath();part(group,new T.ExtrudeGeometry(finShape,{depth:.035,bevelEnabled:true,bevelSize:.015,bevelThickness:.01,bevelSegments:2,steps:1}),crimson,0,0,-.018).name='Swept vertical tail';
+ for(const side of [-1,1]){box(group,.85,.018,.032,enamel,-.17,.145,side*1.82);box(group,.42,.012,.025,aluminum,.11,.145,side*1.12);const strut=box(group,.035,.52,.035,aluminum,-.55,-.34,side*.36);strut.rotation.x=side*-.45;const tire=part(group,new T.TorusGeometry(.115,.045,8,20),'#202326',-.55,-.6,side*.48);tire.name='Rubber landing tire';part(group,new T.CylinderGeometry(.065,.065,.11,12),aluminum,-.55,-.6,side*.48).rotation.x=Math.PI/2;}
+ const prop=new T.Group();prop.position.x=-1.6;group.add(prop);for(let i=0;i<2;i++){const blade=part(prop,new T.SphereGeometry(1,12,8),'#25292b',0,(i?1:-1)*.3,0);blade.scale.set(.025,.39,.065);box(prop,.03,.075,.11,'#e9c466',0,(i?1:-1)*.61,0);}
+ const spinner=part(group,new T.ConeGeometry(.13,.23,20),aluminum,-1.68,0,0);spinner.rotation.z=Math.PI/2;
+ for(let i=0;i<5;i++){for(const side of [-1,1])part(group,new T.SphereGeometry(.012,6,4),aluminum,-1.1+i*.19,.06,side*.267);box(group,.055,.07,.018,'#323837',-.98+i*.07,-.02,.226);}
+ box(group,2.6,.016,.016,'#62635a',2.8,0,0);
  const c=document.createElement('canvas');c.width=1024;c.height=256;const ctx=c.getContext('2d');ctx.fillStyle='#fff2c8';ctx.fillRect(0,0,1024,256);ctx.fillStyle='#b32a2e';ctx.font='bold 150px sans-serif';ctx.textAlign='center';ctx.fillText('Air Ted',512,183);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const banner=part(group,new T.PlaneGeometry(3.3,.85),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}),4.8,0,0);banner.rotation.x=-.45;
- return {group,prop,banner,start:0,until:0,next:performance.now()+75000};}
-export function startAirTed(r,time){r.start=time;r.until=time+6500;r.next=time+105000+Math.random()*90000;}
-export function updateAirTed(r,time){const u=(time-r.start)/6500;r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return 0;r.group.position.set(17-u*39,3.8+Math.sin(u*Math.PI)*.3,1.4);r.group.rotation.z=Math.sin(u*12)*.025;r.prop.rotation.x=time*.07;r.banner.rotation.y=Math.sin(time*.008)*.08;return Math.sin(Math.PI*Math.max(0,Math.min(1,(u-.2)/.65)))*.6;}
+ return {group,prop,banner,start:0,until:0,direction:-1,next:performance.now()+120000};}
+export function startAirTed(r,time){if(time<r.until)return false;r.direction=-r.direction;r.start=time;r.until=time+6500;r.next=time+180000+Math.random()*150000;return true;}
+export function updateAirTed(r,time,camera){const u=(time-r.start)/6500;r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return 0;r.group.position.set(r.direction*(19.5-u*39),3.8+Math.sin(u*Math.PI)*.3,1.4);r.group.rotation.set(0,r.direction===1?0:Math.PI,Math.sin(u*12)*.025);r.prop.rotation.x=time*.07;
+ // Face the camera independently of the aircraft heading: never mirror the lettering.
+ const facing=camera?camera.quaternion:new T.Quaternion().setFromEuler(new T.Euler(-.45,0,0));
+ r.group.updateMatrixWorld(true);r.banner.quaternion.copy(r.group.getWorldQuaternion(new T.Quaternion()).invert()).multiply(facing);
+ return Math.sin(Math.PI*Math.max(0,Math.min(1,(u-.2)/.65)))*.6;}
 function throwingRig(avatar){
  const arm=avatar.userData.arms[1],hand=avatar.userData.hands[1];const forearm=part(avatar,new T.CylinderGeometry(.065,.055,1,8),'#cba28b');forearm.visible=false;
  return {avatar,arm,hand,forearm,restHand:hand.position.clone(),restArm:{position:arm.position.clone(),quaternion:arm.quaternion.clone(),scale:arm.scale.clone()},restBody:avatar.rotation.z};

@@ -1,3 +1,4 @@
+import {createSantaDance,startSantaDance,updateSantaDance,cancelSantaDance} from './santa-dance.mjs';
 import {needsCruiser,needsSpotlight,nerfPair,createCruiser,createTube,createAirTed,startAirTed,updateAirTed,createNerf,updateNerf,createBeerThrow,updateBeerThrow,createPizza,createTubbyCDs,placeTubbyCDs} from './scene-events.mjs';
 import {createVomitRig,startVomit,updateVomit,createJointProp,createDanceRig,startDance,updateDance,attachBackgroundSmoke,updateBackgroundSmoke} from './party-gags.mjs';
 import {attachSafetyRig,updateSafetyPose} from './referee.mjs';
@@ -12,7 +13,8 @@ const phone=()=>window.matchMedia('(max-width:1000px)').matches;
 let renderer;
 try{renderer=new T.WebGLRenderer({antialias:!phone(),powerPreference:'high-performance'});}catch(e){mount.insertAdjacentHTML('beforeend','<p style="padding:200px 30px">This 3D room needs WebGL. Please enable hardware acceleration in your browser.</p>');throw e;}
 renderer.setPixelRatio(Math.min(devicePixelRatio,phone()?1:1.7));renderer.shadowMap.enabled=!phone();renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;mount.prepend(renderer.domElement);
-const scene=new T.Scene();scene.background=new T.Color('#201b19');scene.fog=new T.FogExp2('#211d19',.025);
+const santaDance=createSantaDance();
+const scene=new T.Scene();scene.add(santaDance.group);scene.background=new T.Color('#201b19');scene.fog=new T.FogExp2('#211d19',.025);
 const camera=new T.PerspectiveCamera(43,1,.1,65);let view=0;try{view=Math.max(0,Math.min(2,Number(localStorage.getItem('whales-camera-view'))||0))}catch{}let active=-1,ceremonyIndex=-1,ceremonyKind='';
 const mat=(c,roughness=.8,metalness=0)=>new T.MeshStandardMaterial({color:c,roughness,metalness});
 const wood=mat('#795033'),darkWood=mat('#30221b'),brass=mat('#b3995f',.35,.65),black=mat('#1e2422'),green=mat('#264b39');
@@ -206,7 +208,7 @@ export function setPongPlayers(){
   const danceRig=createDanceRig(actor.avatar.parent,actor.avatar,j+20);const companionDance=null;pongActors.push({...actor,hand,side,danceRig,companionDance,companion});
  }
 }
-export function seatPlayers(n){for(const p of people){scene.remove(p.group);p.label.remove();p.group.traverse(o=>{if(o.geometry)o.geometry.dispose()})}people.length=0;clearBubble();for(let i=0;i<n;i++){
+export function seatPlayers(n){cancelSantaDance(santaDance);for(const p of people){scene.remove(p.group);p.label.remove();p.group.traverse(o=>{if(o.geometry)o.geometry.dispose()})}people.length=0;clearBubble();for(let i=0;i<n;i++){
  const angle=i*Math.PI*2/n;const g=new T.Group();scene.add(g);g.position.set(-Math.sin(angle)*3.25,0,Math.cos(angle)*3.25);g.rotation.y=Math.PI+angle*-1;
  // Face the center using a local forward axis of +z.
  g.lookAt(0,0,0);
@@ -241,6 +243,7 @@ export function refereeSafety(){const p=people.find(person=>person.name==='Saund
 let nextHairFireRound=2;
 export function roundVisuals(round){if(round<nextHairFireRound)return;const actor=people.find(p=>p.characterId==='martens'&&!p.away)||pongActors.find(p=>p.avatar.userData.characterId==='martens');if(actor&&startHairFire(actor.head,performance.now()))nextHairFireRound=round+4+Math.floor(Math.random()*4);}
 export function previewSignatureMoves(){const now=performance.now();let n=runSignatureMoves([...people,...pongActors],now);for(const p of people){if(p.characterId!=='bvn'||p.away)continue;const target=people.find(q=>q!==p&&!q.away);if(target&&!beerThrows.some(r=>r.thrower===p)){beerThrows.push(createBeerThrow(scene,p,target,now));n++;}}return n;}
+export function previewSanta(withElf=false){return startSantaDance(santaDance,performance.now(),withElf);}
 export function previewAirTed(){startAirTed(airTed,performance.now());}
 export function previewStickDance(){const now=performance.now();for(const p of [...people,...pongActors]){if(p.away)continue;startDance(p.danceRig,now);if(p.companionDance)startDance(p.companionDance,now);}return 5000;}
 export function previewVomit(){if(gagIndex>=0&&performance.now()<people[gagIndex]?.vomitRig.until)return null;const available=people.map((p,i)=>i).filter(i=>i>0&&!people[i].away);if(!available.length)return null;gagIndex=available[Math.floor(Math.random()*available.length)];const p=people[gagIndex];startVomit(p.vomitRig,performance.now());if(gagNotice)gagNotice.remove();gagNotice=document.createElement('div');gagNotice.className='gag-caption';gagNotice.textContent=p.name+' needs a moment…';mount.append(gagNotice);return{index:gagIndex,duration:p.vomitRig.duration};}
@@ -284,7 +287,8 @@ function animate(t){requestAnimationFrame(animate);if(document.hidden||!mount.cl
  for(const p of pongActors){p.avatar.visible=true;updateDance(p.danceRig,t);if(p.companionDance){p.companion.visible=true;updateDance(p.companionDance,t);}}
  if(backgroundSmoker)updateBackgroundSmoke(backgroundSmoker,t);
  for(const [j,r] of tubeActors.entries()){r.group.position.y=-.45+Math.sin(sec*1.5+j)*.12;r.group.rotation.z=Math.sin(sec+j)*.08;}for(const [j,wave] of cruiser.waves.entries())wave.position.y=-.69+Math.sin(sec+j)*.025;
- if(t>=airTed.next)startAirTed(airTed,t);const duck=updateAirTed(airTed,t);for(const p of [...people,...pongActors])if(!p.away){p.head.position.y-=duck;p.avatar.rotation.x=duck*.35;}
+ if(t>=airTed.next)startAirTed(airTed,t);const duck=updateAirTed(airTed,t,camera);for(const p of [...people,...pongActors])if(!p.away){p.head.position.y-=duck;p.avatar.rotation.x=duck*.35;}
  if(nerf)updateNerf(nerf,t);beerThrows=beerThrows.filter(r=>{if(updateBeerThrow(r,t))return true;r.group.removeFromParent();r.group.traverse(o=>o.geometry?.dispose());return false;});
+ updateSantaDance(santaDance,t);
  renderer.render(scene,camera);
 }seatPlayers(6);resize();requestAnimationFrame(animate);
