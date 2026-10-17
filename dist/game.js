@@ -236,7 +236,7 @@ $('#sound').onclick=()=>setMuted(!muted);$('#audio-enabled').onchange=()=>setMut
 
 $('#players').onchange=()=>{$('#players').blur();pendingPeepers.clear();paidPeepers.clear();stop();$('#welcome').hidden=false;count=Number($('#players').value);seatPlayers(count);renderCast();away=selfGolden?0:-1;if(selfGolden)setAway(0,true);turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0;buttons();$('#toast').hidden=true;if(!running)status('TAKE YOUR SEAT','Ready when you are.',`A court of ${count}. You and ${count-1} computer players.`)};
 $('#pace').onchange=()=>$('#pace').blur();$('#voice').onchange=()=>{desiredVoice=$('#voice').value||'auto';try{localStorage.setItem('whales-voice',desiredVoice)}catch{}$('#voice').blur();};
-$('#show-bubbles').onchange=()=>setBubblesEnabled($('#show-bubbles').checked);
+$('#show-bubbles').onchange=()=>{setBubblesEnabled($('#show-bubbles').checked);persistSettings();$('#show-bubbles').blur();};
 $('#guide').onchange=()=>{if(running&&!paused&&state.phase!=='restart')updatePrompt()};$('#view').onclick=changeView;
 let helpPaused=false;$('#help').onclick=()=>{helpPaused=running&&!paused;if(helpPaused)$('#pause').click();$('#rules').showModal()};function closeHelp(){$('#rules').close();if(helpPaused&&running&&paused)$('#pause').click();helpPaused=false}$('#close-rules').onclick=closeHelp;$('#got-it').onclick=closeHelp;$('#rules').addEventListener('cancel',e=>{e.preventDefault();closeHelp()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(!muted)unlockSound();speechChannel?.resume();}if(document.hidden&&running&&!paused)$('#pause').click()});renderMode();buttons();stats();

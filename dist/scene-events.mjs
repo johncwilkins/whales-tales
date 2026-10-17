@@ -25,12 +25,52 @@ export function createAirTed(){const group=new T.Group();group.name='Air Ted fly
  return {group,prop,banner,start:0,until:0,next:performance.now()+75000};}
 export function startAirTed(r,time){r.start=time;r.until=time+6500;r.next=time+105000+Math.random()*90000;}
 export function updateAirTed(r,time){const u=(time-r.start)/6500;r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return 0;r.group.position.set(17-u*39,3.8+Math.sin(u*Math.PI)*.3,1.4);r.group.rotation.z=Math.sin(u*12)*.025;r.prop.rotation.x=time*.07;r.banner.rotation.y=Math.sin(time*.008)*.08;return Math.sin(Math.PI*Math.max(0,Math.min(1,(u-.2)/.65)))*.6;}
-export function createNerf(scene,pair){const group=new T.Group();group.name='Brodeur Nerf basketball';scene.add(group);const ball=part(group,new T.SphereGeometry(.15,14,10),'#f28b28');const hoop=new T.Group();pair.target.group.add(hoop);hoop.position.set(0,3.15,0);box(hoop,1.1,.7,.06,'#ece8db',0,.35,-.24);const rim=part(hoop,new T.TorusGeometry(.35,.035,8,28),'#ee8427');rim.rotation.x=Math.PI/2;for(let i=0;i<10;i++){const a=i*Math.PI/5;const line=part(hoop,new T.CylinderGeometry(.008,.008,.35,4),'#e4e4d6',Math.cos(a)*.29,-.18,Math.sin(a)*.29);line.rotation.z=Math.cos(a)*.18;}
- return {group,ball,hoop,...pair};}
-export function updateNerf(r,time){r.group.visible=!r.thrower.away&&!r.target.away;r.hoop.visible=r.group.visible;if(!r.group.visible)return;const u=(time%3800)/3800,from=r.thrower.group.localToWorld(new T.Vector3(.38,1.9,.5)),head=r.target.group.localToWorld(new T.Vector3(0,2.3,.08)),hoop=r.target.group.localToWorld(new T.Vector3(0,3.15,0));
- if(u<.45){r.ball.position.lerpVectors(from,head,u/.45);r.ball.position.y+=Math.sin(u/.45*Math.PI)*.8;}else if(u<.7){r.ball.position.lerpVectors(head,hoop,(u-.45)/.25);r.ball.position.y+=Math.sin((u-.45)/.25*Math.PI)*.55;}else{const end=hoop.clone();end.y-=.8;r.ball.position.lerpVectors(hoop,end,(u-.7)/.12);if(u>.82){r.ball.position.lerpVectors(end,from,(u-.82)/.18);r.ball.position.y+=Math.sin((u-.82)/.18*Math.PI)*.7;}}
- const hit=Math.max(0,1-Math.abs(u-.45)/.05);r.target.head.rotation.x+=hit*.22;r.thrower.avatar.userData.arms[1].rotation.z=-.3-Math.sin(u*Math.PI*2)*.3;
+function throwingRig(avatar){
+ const arm=avatar.userData.arms[1],hand=avatar.userData.hands[1];const forearm=part(avatar,new T.CylinderGeometry(.065,.055,1,8),'#cba28b');forearm.visible=false;
+ return {avatar,arm,hand,forearm,restHand:hand.position.clone(),restArm:{position:arm.position.clone(),quaternion:arm.quaternion.clone(),scale:arm.scale.clone()},restBody:avatar.rotation.z};
 }
-export function createBeerThrow(scene,thrower,target,time){const group=new T.Group();group.name='BVN flying beer';scene.add(group);const cup=part(group,new T.CylinderGeometry(.14,.1,.34,12),'#c33132');const drops=Array.from({length:12},()=>part(group,new T.SphereGeometry(.045,6,4),'#d8a743'));return {group,cup,drops,thrower,target,restHand:thrower.avatar.userData.hands[1].position.clone(),restArm:thrower.avatar.userData.arms[1].rotation.clone(),start:time,until:time+2200};}
-export function updateBeerThrow(r,time){const arm=r.thrower.avatar.userData.arms[1],hand=r.thrower.avatar.userData.hands[1];const motion=Math.sin(Math.min(1,(time-r.start)/900)*Math.PI);arm.rotation.copy(r.restArm);arm.rotation.x-=motion;hand.position.copy(r.restHand);hand.position.y+=motion*.4;const u=Math.min(1,(time-r.start)/2200),from=r.thrower.group.localToWorld(new T.Vector3(.35,1.9,.5)),to=r.target.group.localToWorld(new T.Vector3(0,2,.2));r.group.position.lerpVectors(from,to,Math.min(1,u/.7));r.group.position.y+=Math.sin(Math.min(1,u/.7)*Math.PI)*1.6;r.cup.rotation.z=u*14;r.cup.visible=u<.74;for(const [i,p] of r.drops.entries()){const splash=Math.max(0,(u-.64)/.36);p.position.set(Math.sin(i*2.4)*splash*.9,-splash*splash*1.4,Math.cos(i*2.4)*splash*.8);p.visible=u>.45;}return time<r.until;}
+function restoreThrow(r){r.arm.position.copy(r.restArm.position);r.arm.quaternion.copy(r.restArm.quaternion);r.arm.scale.copy(r.restArm.scale);r.hand.position.copy(r.restHand);r.avatar.rotation.z=r.restBody;r.forearm.visible=false;}
+function throwPose(r,hand,elbow,lean=0){
+ const shoulder=new T.Vector3(.3,1.65,0);const upper=elbow.clone().sub(shoulder);r.arm.position.copy(shoulder).add(elbow).multiplyScalar(.5);r.arm.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),upper.clone().normalize());r.arm.scale.set(1,upper.length()/.58,1);r.hand.position.copy(hand);
+ const lower=hand.clone().sub(elbow);r.forearm.position.copy(elbow).add(hand).multiplyScalar(.5);r.forearm.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),lower.clone().normalize());r.forearm.scale.y=lower.length();r.forearm.visible=true;r.avatar.rotation.z=r.restBody+lean;
+}
+const mix=(a,b,t)=>a.clone().lerp(b,Math.max(0,Math.min(1,t)));
+function targetDirection(thrower,target){const point=target.group.getWorldPosition(new T.Vector3());thrower.group.worldToLocal(point);point.y=0;return point.lengthSq()?point.normalize():new T.Vector3(0,0,1);}
+function hardThrowPose(r,elapsed,direction){
+ const rest=r.restHand,pickup=new T.Vector3(.38,.72,.15),cocked=new T.Vector3(.45,2.38,-.48),follow=new T.Vector3(.3,1.85,0).addScaledVector(direction,1.1);let hand,elbow,lean;
+ if(elapsed<1000){hand=mix(rest,pickup,Math.sin(elapsed/1000*Math.PI/2));elbow=new T.Vector3(.55,1.18,.05);lean=-.13;}
+ else if(elapsed<1800){hand=mix(pickup,cocked,(elapsed-1000)/800);elbow=new T.Vector3(.73,2.05,-.25);lean=-.22;}
+ else if(elapsed<2100){const u=(elapsed-1800)/300;hand=mix(cocked,follow,u);elbow=mix(new T.Vector3(.73,2.05,-.25),new T.Vector3(.35,1.9,0).addScaledVector(direction,.6),u);lean=-.22+u*.48;}
+ else if(elapsed<2800){const u=(elapsed-2100)/700;hand=mix(follow,rest,u);elbow=mix(new T.Vector3(.35,1.9,0).addScaledVector(direction,.6),new T.Vector3(.36,1.5,.18),u);lean=.26*(1-u);}
+ else{restoreThrow(r);return;}
+ throwPose(r,hand,elbow,lean);
+}
+export function createNerf(scene,pair){const group=new T.Group();group.name='Brodeur Nerf basketball';scene.add(group);const ball=part(group,new T.SphereGeometry(.15,14,10),'#f28b28');const hoop=new T.Group();pair.target.group.add(hoop);hoop.position.set(0,3.15,0);box(hoop,1.1,.7,.06,'#ece8db',0,.35,-.24);const rim=part(hoop,new T.TorusGeometry(.35,.035,8,28),'#ee8427');rim.rotation.x=Math.PI/2;for(let i=0;i<10;i++){const a=i*Math.PI/5;const line=part(hoop,new T.CylinderGeometry(.008,.008,.35,4),'#e4e4d6',Math.cos(a)*.29,-.18,Math.sin(a)*.29);line.rotation.z=Math.cos(a)*.18;}
+ return {group,ball,hoop,...pair,pose:throwingRig(pair.thrower.avatar)};}
+export function updateNerf(r,time){
+ r.group.visible=!r.thrower.away&&!r.target.away;r.hoop.visible=r.group.visible;if(!r.group.visible){restoreThrow(r.pose);return;}
+ const elapsed=((time%5000)+5000)%5000,direction=targetDirection(r.thrower,r.target);hardThrowPose(r.pose,elapsed,direction);r.thrower.avatar.updateMatrixWorld(true);
+ const releaseLocal=new T.Vector3(.3,1.85,0).addScaledVector(direction,1.1),from=r.thrower.avatar.localToWorld(releaseLocal),head=r.target.group.localToWorld(new T.Vector3(0,2.3,.08)),hoop=r.target.group.localToWorld(new T.Vector3(0,3.15,0));
+ r.ball.visible=elapsed>=650&&elapsed<3850;
+ if(elapsed<1000){r.ball.position.copy(r.thrower.group.localToWorld(new T.Vector3(.38,.72,.15)));}
+ else if(elapsed<2100){r.ball.position.copy(r.thrower.avatar.localToWorld(r.pose.hand.position.clone()));}
+ else if(elapsed<2500){r.ball.position.lerpVectors(from,head,(elapsed-2100)/400);r.ball.position.y+=Math.sin((elapsed-2100)/400*Math.PI)*.12;}
+ else if(elapsed<3500){const u=(elapsed-2500)/1000;r.ball.position.lerpVectors(head,hoop,u);r.ball.position.y+=Math.sin(u*Math.PI)*.9;}
+ else if(elapsed<3850){r.ball.position.copy(hoop);r.ball.position.y-=(elapsed-3500)/350*.8;}
+ const hit=Math.max(0,1-Math.abs(elapsed-2500)/160);r.target.head.rotation.x+=hit*.25;
+}
+export function createBeerThrow(scene,thrower,target,time){
+ const group=new T.Group();group.name='BVN flying beer';scene.add(group);const cup=part(group,new T.CylinderGeometry(.14,.1,.34,12),'#c33132');const drops=Array.from({length:12},()=>part(group,new T.SphereGeometry(.045,6,4),'#d8a743'));const pose=throwingRig(thrower.avatar);
+ return {group,cup,drops,thrower,target,pose,restHand:pose.restHand,start:time,until:time+2200};
+}
+export function updateBeerThrow(r,time){
+ const elapsed=Math.max(0,time-r.start),direction=targetDirection(r.thrower,r.target);
+ // A short backswing followed by a 140ms snap, then a fast, low flight.
+ hardThrowPose(r.pose,elapsed<450?1000+elapsed/450*800:elapsed<590?1800+(elapsed-450)/140*300:2100+(elapsed-590)/650*700,direction);
+ r.thrower.avatar.updateMatrixWorld(true);const from=r.thrower.avatar.localToWorld(new T.Vector3(.3,1.85,0).addScaledVector(direction,1.1)),to=r.target.group.localToWorld(new T.Vector3(0,2,.2));
+ if(elapsed<590){r.group.position.copy(r.thrower.avatar.localToWorld(r.pose.hand.position.clone()));r.cup.rotation.z=-elapsed/450*.6;}
+ else{const u=Math.min(1,(elapsed-590)/380);r.group.position.lerpVectors(from,to,u);r.group.position.y+=Math.sin(u*Math.PI)*.15;r.cup.rotation.z=(elapsed-590)*.018;}
+ r.cup.visible=elapsed<1020;for(const [i,p] of r.drops.entries()){const splash=Math.max(0,(elapsed-970)/1230);p.position.set(Math.sin(i*2.4)*splash*1.1,-splash*splash*1.4,Math.cos(i*2.4)*splash*.9);p.visible=elapsed>=970;}
+ if(time>=r.until){restoreThrow(r.pose);r.pose.forearm.removeFromParent();r.pose.forearm.geometry.dispose();return false;}return true;
+}
 export function createPizza(){const group=new T.Group();group.name='Rueben pizza';group.position.set(-.55,1.72,.78);part(group,new T.CylinderGeometry(.38,.38,.025,28),'#e2ddd0');part(group,new T.CylinderGeometry(.34,.34,.05,28),'#bd793b',0,.035,0);part(group,new T.CylinderGeometry(.3,.3,.012,28),'#e5bc58',0,.065,0);const crust=part(group,new T.TorusGeometry(.315,.026,8,28),'#ce9449',0,.065,0);crust.rotation.x=Math.PI/2;for(let i=0;i<11;i++){const a=i*2.4,r=.08+(i%3)*.065;part(group,new T.CylinderGeometry(.037,.037,.013,8),'#a84630',Math.sin(a)*r,.079,Math.cos(a)*r);}return group;}
