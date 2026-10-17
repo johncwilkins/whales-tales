@@ -76,3 +76,7 @@ Rueben raises a tennis racket whenever a chug ceremony begins. Colman occasional
 On chugs, Komar stands and switches to an Army brigadier general’s uniform with a single silver star on each shoulder, then sits and changes back when the ceremony ends.
 
 Rarely between rounds, Tubby volunteers for flags and a sip. This puts him one mistake from a chug while preserving the rightful round opener. Another player’s next mistake clears his flag normally; existing flags are not displaced.
+
+Rooks always has a plate of barbecue ribs beside his beer, with lightweight animated steam and smoke rising from it.
+
+Martens occasionally has a brief flickering cartoon hair fire while speaking. It extinguishes automatically and has a cooldown.
