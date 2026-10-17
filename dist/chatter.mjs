@@ -9,4 +9,9 @@ export const CHATTER=[
  ['We doing breakfast tomorrow?','Let’s get through counting first.']
 ];
 export const chatterGap=(random=Math.random)=>20+Math.floor(random()*11);
-export function chooseChatter(previous=-1,random=Math.random){const indices=CHATTER.map((_,i)=>i).filter(i=>i!==previous);const index=indices[Math.floor(random()*indices.length)];return {index,lines:CHATTER[index]}}
+export const TUBBY_CHATTER=[
+ ['Do we have to listen to this Tubby music?','It’s a classic. You people have no taste.'],
+ ['Tubby, did you bring every CD you own?','Just the essentials. The rest are in the car.'],
+ ['Whose idea was it to let Tubby DJ?','You’re welcome. This table needed some culture.']
+];
+export function chooseChatter(previous=-1,random=Math.random,presentIds=[]){const pool=[...CHATTER,...(presentIds.includes('tubby')?TUBBY_CHATTER:[])];const indices=pool.map((_,i)=>i).filter(i=>i!==previous);const index=indices[Math.floor(random()*indices.length)];return {index,lines:pool[index],tubby:index>=CHATTER.length};}

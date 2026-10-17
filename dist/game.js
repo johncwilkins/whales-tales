@@ -90,8 +90,8 @@ async function chatterBeat(myToken){
  if(state.phase!=='restart'||round<nextChatter)return true;
  const before=state,voices=people.map((_,i)=>i).filter(i=>i>0&&i!==away);
  if(voices.length<2)return true;
- nextChatter=round+chatterGap();const chat=chooseChatter(lastChatter);lastChatter=chat.index;
- const first=Math.floor(Math.random()*voices.length),speakers=[voices[first],voices[(first+1)%voices.length]];
+ nextChatter=round+chatterGap();const chat=chooseChatter(lastChatter,Math.random,people.filter((p,i)=>i!==away&&!p.away).map(p=>p.characterId));lastChatter=chat.index;
+ const first=Math.floor(Math.random()*voices.length);let speakers=[voices[first],voices[(first+1)%voices.length]];if(chat.tubby){const tubby=voices.find(i=>people[i].characterId==='tubby');speakers=[voices.find(i=>i!==tubby),tubby];}
  status('BETWEEN ROUNDS','A word at the table.','The next round starts after the chatter.');
  for(let j=0;j<chat.lines.length;j++){await say(speakers[j],chat.lines[j],myToken,{ceremony:true});if(myToken!==token||!running||state!==before)return false;}
  return true;
