@@ -70,3 +70,5 @@
 .play-actions .golden-chair-toggle{flex:1.5;min-width:0;margin:0;padding:5px 7px;font-size:10px;line-height:1.25;gap:5px}.play-actions .golden-chair-toggle input{width:15px;height:15px}
 
 .play-actions .bubbles-toggle{display:flex;align-items:center;gap:4px;flex:.85;min-width:0;padding:4px;border:1px solid #53614a;border-radius:4px;font-size:10px;cursor:pointer;color:#d3dfb9}.bubbles-toggle input{accent-color:var(--lime);width:14px;height:14px;margin:0}.play-actions{gap:5px}
+
+.about-link{text-decoration:none;display:inline-flex;align-items:center}@media(max-width:600px){header .brand>span:last-child{display:none}}
