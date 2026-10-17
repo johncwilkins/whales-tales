@@ -63,7 +63,7 @@ Uses the device’s speech engine. Available voices and quality vary. A speech l
 
 Three.js 0.169.0 is vendored under its MIT license; see `dist/vendor/THREE-LICENSE.txt`.
 
-Settings remains available throughout ceremonies and peepage and pauses/resumes safely. Ordinary reply limits are Easygoing 9 seconds (former Regular), Regular 4.5 seconds (former Quick), Quick 3 seconds and Real Quick 1.8 seconds. Added more golden-chair excuses, wrong-word/silence/peepage heckles, Les chatter, Watson in a West Point shirt, barbecue chef Rooks, Wargo’s floppy olive outback hat, two central beer pitchers, a Mr. Beams closet light and small table props.
+Settings remains available throughout ceremonies and peepage and pauses/resumes safely. Ordinary reply limits are Easygoing 9 seconds (former Regular), Regular 4.5 seconds (former Quick), Quick 3 seconds and Real Quick 1.8 seconds. Added more golden-chair excuses, wrong-word/silence/peepage heckles, Les chatter, Watson in a West Point shirt, barbecue chef Rooks, Wargo’s floppy olive outback hat, two central beer pitchers, a black twin-LED Mr. Beams spotlight and small table props.
 
 When Saunders is seated and present, every third mistake (including non-ending peepage) triggers a brief NFL safety pose with both hands together overhead. The pose blends back to his resting arms.
 
@@ -80,3 +80,7 @@ Rarely between rounds, Tubby volunteers for flags and a sip. This puts him one m
 Rooks always has a plate of barbecue ribs beside his beer, with lightweight animated steam and smoke rising from it.
 
 Martens occasionally has a brief flickering cartoon hair fire while speaking. It extinguishes automatically and has a cooldown.
+
+Tubby rarely opts out of an expected response with “Mexican!” and immediately takes the resulting penalty drink. Cindy gently shifts beside Graham’s chair, clear of his label. A small smoking grill stands behind Rooks.
+
+Player menus list names alphabetically. When Tubby says “Mexican!”, the table calls him out for playing the wrong game.
