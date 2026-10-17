@@ -92,3 +92,16 @@ Att poses on chugs with his left hand behind his neck and right arm extended upw
 Player count, chosen cast, pace, guide, bubbles, sound and controls-only mode persist on this browser. Camera view is remembered. Cindy and Rooks’s smoker choose a visible chair-side spot when the view changes. Martens’s five-second hair flare is scheduled early and recurs occasionally.
 
 Bell and Sapperstien are selectable in the alphabetical cast. I triggers every present signature move; B triggers a prominent stick-figure vomit gag which also happens rarely between rounds. A rolled joint and ashtray appear on the table when Levitt or Sapperstien is seated.
+
+
+## Spectating, deck party and new gags
+
+Golden chair on the main screen lets the human watch while the callers cover the empty chair; switch it off to rejoin. The toggle is next to Pause and New round, including on mobile. Computer bathroom breaks are suspended while the human is watching. Recker replaces Wargo in the default cast; existing saved casts stay as selected.
+
+Wargo or Wilkins at the counting table switches the room to a cabin-cruiser aft deck. The two randomly selected background people float in inner tubes instead of playing pong. Levitt or Sapperstien adds an animated background smoker. Brodeur with Recker or Pekalsky adds an orange Nerf ball bouncing from that player’s head into an overhead hoop. BVN joins the alphabetical roster with a dark-haired, blue-gray-suited doll based on the supplied group photograph; I throws his beer toward another seated player. T calls Air Ted, a low banner-towing plane that makes players duck; flybys also recur roughly every two to three minutes. The table spotlight appears only with Recker. F remains the five-second black smiley stick-figure party; S remains Who.
+
+## GoatCounter preparation
+
+Set `goatCounterEndpoint` in `dist/analytics-config.mjs` to the site’s exact `https://YOUR-CODE.goatcounter.com/count` address. It is blank by default, so no analytics script or requests load yet. `analytics.mjs` loads GoatCounter’s official HTTPS counting script only when an endpoint is configured. No secret API key is needed for page counting.
+
+Rueben has a pepperoni pizza beside his beer when seated at the counting table.
