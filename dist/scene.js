@@ -1,4 +1,4 @@
-import {createVomitRig,startVomit,updateVomit,createJointProp} from './party-gags.mjs';
+import {createVomitRig,startVomit,updateVomit,createJointProp,createDanceRig,startDance,updateDance} from './party-gags.mjs';
 import {attachSafetyRig,updateSafetyPose} from './referee.mjs';
 import {attachCelebrationRig,updateCelebrationPose,startCelebration,attachGeneralRig,startGeneral,updateGeneralPose,attachHairFire,startHairFire,updateHairFire,attachAttRig,startAttPose,updateAttPose,runSignatureMoves} from './celebrations.mjs';
 import {createTableProps,createRibPlate,updateRibSteam,createSmoker} from './table-props.mjs';
@@ -188,11 +188,11 @@ let jointProp=null,gagIndex=-1,gagNotice=null;
 const pongActors=[];
 export function setPongPlayers(){
  const chosen=choosePongCast(people.map(p=>p.characterId));
- pong.add(p1,p2);for(const actor of pongActors){pong.remove(actor.avatar);actor.avatar.traverse(o=>o.geometry?.dispose())}pongActors.length=0;
+ pong.add(p1,p2);for(const actor of pongActors){actor.danceRig.group.traverse(o=>o.geometry?.dispose());pong.remove(actor.danceRig.group);pong.remove(actor.avatar);actor.avatar.traverse(o=>o.geometry?.dispose())}pongActors.length=0;
  for(const [j,id] of chosen.entries()){
   const actor=createAvatar(CHARACTERS[id]||CHARACTERS.wargo,j+1),side=j===0?-1:1;actor.avatar.position.set(side*3.02,0,0);actor.avatar.rotation.y=-side*Math.PI/2;actor.avatar.userData.characterId=id;pong.add(actor.avatar);const companion=createCompanion(CHARACTERS[id]);if(companion)actor.avatar.add(companion);
   const hand=actor.avatar.userData.hands[j===0?1:0],racket=j===0?p1:p2;hand.add(racket);racket.position.set(0,.22,.09);racket.rotation.set(0,Math.PI/2,0);
-  pongActors.push({...actor,hand,side});
+  const danceRig=createDanceRig(pong,actor.avatar,j+20);const companionDance=null;pongActors.push({...actor,hand,side,danceRig,companionDance,companion});
  }
 }
 export function seatPlayers(n){for(const p of people){scene.remove(p.group);p.label.remove();p.group.traverse(o=>{if(o.geometry)o.geometry.dispose()})}people.length=0;clearBubble();for(let i=0;i<n;i++){
@@ -201,14 +201,14 @@ export function seatPlayers(n){for(const p of people){scene.remove(p.group);p.la
  g.lookAt(0,0,0);
  const character=CHARACTERS[seatCast[i]];
  const chairSeat=box(.78,.12,.75,darkWood,g,0,.72,0);const chairBack=box(.8,.9,.13,green,g,0,1.18,-.37);for(const x of [-.28,.28])for(const z of [-.27,.27])box(.07,.72,.07,darkWood,g,x,.36,z);
- const {avatar,head,mouth}=createAvatar(character,i);g.add(avatar);const vomitRig=createVomitRig(g,avatar);
- const companion=createCompanion(character);if(companion)g.add(companion);
+ const {avatar,head,mouth}=createAvatar(character,i);g.add(avatar);const vomitRig=createVomitRig(g,avatar);const danceRig=createDanceRig(g,avatar,i*1.7);
+ const companion=createCompanion(character);if(companion)g.add(companion);const companionDance=companion?createDanceRig(g,companion,i+10):null;
  const smoker=character?.id==='rooks'?createSmoker():null;if(smoker)g.add(smoker);
  const ribPlate=character?.id==='rooks'?createRibPlate():null;if(ribPlate)g.add(ribPlate);
  const beerCup=cup(g,.48,1.69,.86,.85);
  const label=document.createElement('div');label.className='seat-label'+(i===0?' you':'');label.textContent=i===0?'YOU':character?.name||names[i];labels.append(label);
  const ring=mesh(new T.TorusGeometry(.48,.025,8,48),new T.MeshBasicMaterial({color:'#d5e79f',transparent:true,opacity:0}),g,0,.06,0);ring.rotation.x=Math.PI/2;
- people.push({group:g,avatar,companion,ribPlate,smoker,vomitRig,characterId:character?.id,chairSeat,chairBack,away:false,head,mouth,ring,label,name:character?.name||names[i],seed:i*1.6,beerCup,fill:1,flags:0,crushedCount:0,flagMarker:null,drinkUntil:0});
+ people.push({group:g,avatar,companion,ribPlate,smoker,vomitRig,danceRig,companionDance,characterId:character?.id,chairSeat,chairBack,away:false,head,mouth,ring,label,name:character?.name||names[i],seed:i*1.6,beerCup,fill:1,flags:0,crushedCount:0,flagMarker:null,drinkUntil:0});
 }active=-1;gagIndex=-1;if(gagNotice){gagNotice.remove();gagNotice=null;}if(jointProp){scene.remove(jointProp);jointProp.traverse(o=>o.geometry?.dispose());jointProp=null;}if(people.some(p=>['levitt','sapperstien'].includes(p.characterId))){jointProp=createJointProp();scene.add(jointProp);}setPongPlayers();resize();}
 
 export function clearFlags(){for(let i=0;i<people.length;i++){const p=people[i];if(p.flagMarker){p.group.remove(p.flagMarker);p.flagMarker.traverse(o=>{if(o.geometry)o.geometry.dispose()});p.flagMarker=null}p.flags=0;p.crushedCount=0;p.label.textContent=p.away?p.name+' ◇':i===0?'YOU':p.name;}}
@@ -229,6 +229,7 @@ export function refereeSafety(){const p=people.find(person=>person.name==='Saund
 let nextHairFireRound=2;
 export function roundVisuals(round){if(round<nextHairFireRound)return;const actor=people.find(p=>p.characterId==='martens'&&!p.away)||pongActors.find(p=>p.avatar.userData.characterId==='martens');if(actor&&startHairFire(actor.head,performance.now()))nextHairFireRound=round+4+Math.floor(Math.random()*4);}
 export function previewSignatureMoves(){return runSignatureMoves([...people,...pongActors],performance.now());}
+export function previewStickDance(){const now=performance.now();for(const p of [...people,...pongActors]){if(p.away)continue;startDance(p.danceRig,now);if(p.companionDance)startDance(p.companionDance,now);}return 5000;}
 export function previewVomit(){if(gagIndex>=0&&performance.now()<people[gagIndex]?.vomitRig.until)return null;const available=people.map((p,i)=>i).filter(i=>i>0&&!people[i].away);if(!available.length)return null;gagIndex=available[Math.floor(Math.random()*available.length)];const p=people[gagIndex];startVomit(p.vomitRig,performance.now());if(gagNotice)gagNotice.remove();gagNotice=document.createElement('div');gagNotice.className='gag-caption';gagNotice.textContent=p.name+' needs a moment…';mount.append(gagNotice);return{index:gagIndex,duration:p.vomitRig.duration};}
 export function previewAttPose(){const seated=people.find(p=>p.characterId==='att'&&!p.away),background=pongActors.find(p=>p.avatar.userData.characterId==='att');const actor=seated||background;return actor?startAttPose(actor.avatar,performance.now()):false;}
 export function setCeremony(i,kind=''){
@@ -266,5 +267,7 @@ function animate(t){requestAnimationFrame(animate);if(document.hidden||!mount.cl
  if(bubbleEl&&people[bubbleIndex]){const a=project(people[bubbleIndex],0,people[bubbleIndex].flags?3.4:2.85,0);bubbleEl.style.left=Math.max(55,Math.min(w-55,a[0]))+'px';bubbleEl.style.top=Math.max(65,a[1])+'px';if(t>bubbleUntil)hideBubble()}
  const cycle=sec*1.25,swing=Math.sin(cycle);ball.position.set(swing*2.43,1.72+Math.abs(Math.cos(cycle))*.65,Math.sin(cycle*2)*.22);
  for(const actor of pongActors){updateHairFire(actor.head,t);updateSafetyPose(actor.avatar,t);updateCelebrationPose(actor.avatar,t);updateGeneralPose(actor.avatar,t);updateAttPose(actor.avatar,t);const posing=[actor.avatar.userData.attRig,actor.avatar.userData.safetyRig,actor.avatar.userData.celebrationRig,actor.avatar.userData.generalRig].some(r=>r&&t<r.until);const hit=Math.pow(Math.max(0,-actor.side*swing),12);if(!posing)actor.hand.position.x=(actor.side<0?1:-1)*.38+Math.sin(cycle*2)*.15;if(!posing)actor.hand.rotation.x=-.1+hit*.3;actor.head.rotation.y=Math.sin(cycle)*.1;actor.avatar.rotation.z=actor.side*hit*.035;}
+ for(const p of people){if(p.away)p.danceRig.group.visible=false;else if(updateDance(p.danceRig,t))p.vomitRig.group.visible=false;if(p.companionDance){if(!p.away){p.companion.visible=true;updateDance(p.companionDance,t);}else p.companionDance.group.visible=false;}}
+ for(const p of pongActors){p.avatar.visible=true;updateDance(p.danceRig,t);if(p.companionDance){p.companion.visible=true;updateDance(p.companionDance,t);}}
  renderer.render(scene,camera);
 }seatPlayers(6);resize();requestAnimationFrame(animate);
