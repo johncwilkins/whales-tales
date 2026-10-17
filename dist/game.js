@@ -71,7 +71,7 @@ async function say(i,text,myToken,{opening=false,ceremony=false,selfCall=false,o
  const rate=mobileDevice()?(ceremony?1: selfCall?1.75:opening?1.4:MODES[modeId].olympic?1.65:Math.max(1.3,pace().rate)):(ceremony?(/get his number/i.test(text)?1.05:1.12):selfCall?1.85:opening?1.5:MODES[modeId].olympic?1.8:pace().rate);
  const shortMobile=mobileDevice()&&!opening&&!ceremony&&/^(?:\d+|Nay!|Who\?)$/.test(text),mobileBudget=Number(text)>=10?700:550;
  const duration=Math.max(150,text.length*55/rate);let began=false;const begin=()=>{if(began||myToken!==token||speechId!==speechSerial)return;began=true;activeSpeaker=i;showBubble(i,belch?'Buuurp!':text,duration+1800);$('#last').textContent=`${people[i].name}: “${belch?'Buuurp!':text}”`;onStart?.();};
- if(belch){if(!muted)playBelch();begin();await wait(520);}
+ if(belch){if(muted){begin();await wait(570);}else{const length=await playBelch(begin);await wait(length);}}
  else if(muted||!speechChannel){begin();await wait(Math.min(duration,1200));}
  else{const voice=selectVoice(voices(),i,$('#voice').value||'auto',{single:mobileDevice()});await speechChannel.speak(text,{...(voice?{voice}:{}),rate,pitch:1,volume:1,onStart:begin,...(shortMobile?{maxDuration:mobileBudget,maxStartDelay:900}:{})});await untilResumed();if(myToken!==token||speechId!==speechSerial)return;begin();}
  await untilResumed();if(myToken===token&&speechId===speechSerial){activeSpeaker=-1;setTalking(-1);}
@@ -231,7 +231,7 @@ document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.alt
  }
  const value=keyResponse(e.key,keyboardLayout);if(value===null)return;e.preventDefault();respond(value)});
 $('#pause').onclick=()=>{if(!running)return;clearNumberDraft();paused=!paused;waiting=false;humanPending=null;cancelAnimationFrame(frame);$('#timer-fill').style.width='0';
- if(paused){stopBelch();pauseSnapshot=[$('#status-tag').textContent,$('#prompt').textContent,$('#detail').textContent];speechChannel?.cancel();clearBubble();setActive(-1);status('TAKING A BREATHER','Round paused.','Talking stopped. Resume when you’re ready.');}
+ if(paused){stopBelch();botPending=null;pauseSnapshot=[$('#status-tag').textContent,$('#prompt').textContent,$('#detail').textContent];speechChannel?.cancel();clearBubble();setActive(-1);status('TAKING A BREATHER','Round paused.','Talking stopped. Resume when you’re ready.');}
  else{unlockSound();speechChannel?.resume();if(pauseSnapshot)status(...pauseSnapshot);releasePause();if(state.phase!=='restart'&&!peepBusy&&state!==announcementState)pump(token);}
  buttons();};
 function setMuted(value){muted=value;setSoundEnabled(!muted);$('#audio-enabled').checked=!muted;$('#preview-voice').disabled=muted;$('#sound').textContent=muted?'◖ Sound off':'◖ Sound on';$('#sound').setAttribute('aria-pressed',String(!muted));persistSettings();if(muted)speechChannel?.cancel();else{unlockSound();speechChannel?.resume();}}

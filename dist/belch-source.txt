@@ -1,0 +1,6 @@
+Burp, by ezwa (Ezwa), originally published by PDSounds.org.
+Source: https://commons.wikimedia.org/wiki/File:Burp.ogg
+Original recording: https://upload.wikimedia.org/wikipedia/commons/5/54/Burp.ogg
+Public domain, released by its author; see the source file page.
+Game copy: excerpt from 0.17 to 0.74 seconds, normalized, faded at the end,
+and converted to mono 22,050 Hz PCM WAV. Original pitch preserved.
