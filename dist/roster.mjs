@@ -5,7 +5,7 @@ export const CHARACTERS={
  rose:{id:'rose',name:'Rose',description:'Red baseball cap, broad smile, black polo, khaki shorts',shirt:'#1f2829',skin:'#d4a08a',hair:'#74746b'},
  martens:{id:'martens',name:'Martens',description:'Sandy brown hair, black sunglasses, red Nantucket tee, light shorts',shirt:'#ad575a',skin:'#d8ab90',hair:'#8d785b'},
  rueben:{id:'rueben',name:'Rueben',description:'Full dark hair, white-framed sunglasses, white graphic tee',shirt:'#f0eee3',skin:'#b88768',hair:'#2f2624'},
- colman:{id:'colman',name:'Colman',description:'Swept-up salt-and-pepper hair, burgundy polo, dark jeans',shirt:'#682f42',skin:'#d3aa91',hair:'#7b7e75'},
+ colman:{id:'colman',name:'Colman',description:'Full tousled gray-brown hair, thick eyebrows, light stubble, burgundy polo and dark jeans',shirt:'#79434d',skin:'#d3aa91',hair:'#77776b'},
  recker:{id:'recker',name:'Recker',description:'Blue C baseball cap, black sunglasses, pale shirt',shirt:'#b9b2a1',skin:'#c79b7d',hair:'#4f3e31'},
  att:{id:'att',name:'Att',description:'Close dark hair, dark goatee, black sunglasses, red shirt',shirt:'#a92f3a',skin:'#b78768',hair:'#2b2420'},
  wilkins:{id:'wilkins',name:'Wilkins',description:'Tousled silver-gray hair, open smile, navy tee, khaki trousers',shirt:'#18212c',skin:'#d2a18a',hair:'#9b9c90'},
