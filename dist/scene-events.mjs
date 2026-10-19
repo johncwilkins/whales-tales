@@ -18,6 +18,45 @@ export function createCruiser(){
  return {group,sea,waves};
 }
 export function createTube(parent,avatar,index){const group=new T.Group();group.name='Inner-tube swimmer';parent.add(group);group.position.set(index?6.8:-6.8,-.45,-2.7-index*2);group.rotation.y=index?-.7:.7;avatar.removeFromParent();avatar.position.set(0,-.76,0);avatar.rotation.set(0,0,0);group.add(avatar);const tube=part(group,new T.TorusGeometry(.64,.22,12,32),index?'#e5ae47':'#498da6',0,.22,0);tube.rotation.x=Math.PI/2;return {group,avatar};}
+export const AIR_TED_MESSAGES=Object.freeze([
+ 'Bag Chew',
+ 'Mosquito Grill - draughts 50% off tonight',
+ 'Seafood Newburgh',
+ 'Send Me',
+ 'Christmas Party this Sunday',
+ 'Barto pin keg this Friday',
+ 'CHT Kamakazis 50 cents off tonight',
+ "Is Les coming over?",
+ "Rooks’ ribs — follow the smoke",
+ 'Golden chair reserved',
+ 'Cold beer. Questionable company.',
+ 'Last call? Nice try.',
+ 'Tubby: requests are not being taken'
+]);
+export function chooseAirTedMessage(previous=-1,random=Math.random){
+ const eligible=AIR_TED_MESSAGES.map((_,i)=>i).filter(i=>i!==previous);
+ const index=eligible[Math.min(eligible.length-1,Math.max(0,Math.floor(random()*eligible.length)))];
+ return {index,text:AIR_TED_MESSAGES[index]};
+}
+function paintAirTedBanner(r,message){
+ const ctx=r.bannerCanvas.getContext('2d'),w=r.bannerCanvas.width,h=r.bannerCanvas.height;
+ ctx.fillStyle='#fff2c8';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#b32a2e';ctx.lineWidth=10;ctx.strokeRect(12,12,w-24,h-24);
+ ctx.fillStyle='#a3282d';ctx.textAlign='center';ctx.textBaseline='middle';
+ const lines=message==='Mosquito Grill - draughts 50% off tonight'?['Mosquito Grill','draughts 50% off tonight']:message==='CHT Kamakazis 50 cents off tonight'?['CHT Kamakazis','50 cents off tonight']:message.length>30?[message.split(' ').slice(0,3).join(' '),message.split(' ').slice(3).join(' ')]:[message];
+ ctx.font='bold '+(lines.length===1?136:92)+'px sans-serif';for(const [i,line] of lines.entries())ctx.fillText(line,w/2,h/2+(i-(lines.length-1)/2)*106,w-90);
+ r.banner.material.map.needsUpdate=true;r.message=message;r.banner.userData.message=message;
+}
+function airTedLivery(group){
+ const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=256;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,1024,256);ctx.font='italic bold 190px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=10;ctx.strokeStyle='#fff7e4';ctx.strokeText('Air Ted',512,138);ctx.fillStyle='#9d2228';ctx.fillText('Air Ted',512,138);
+ const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
+ const labels=[];for(const side of [-1,1]){
+  const geometry=new T.PlaneGeometry(1.55,.2,20,4),vertices=geometry.attributes.position,uv=geometry.attributes.uv;
+  // Conform the lettering to the curved fuselage, with correct reading order on each side.
+  for(let i=0;i<vertices.count;i++){const x=vertices.getX(i)-.15,y=vertices.getY(i)-.03,profile=[[-1.2,.23],[-.75,.28],[-.2,.27],[.4,.2],[1.12,.095]],j=profile.findIndex(([end])=>end>=x),[x0,r0]=profile[Math.max(0,j-1)],[x1,r1]=profile[Math.max(1,j)],radius=r0+(r1-r0)*(x-x0)/(x1-x0);vertices.setXYZ(i,x,y,side*(Math.sqrt(Math.max(.003,radius*radius-y*y))+.006));if(side<0)uv.setX(i,1-uv.getX(i));}
+  geometry.computeVertexNormals();const label=part(group,geometry,new T.MeshBasicMaterial({map:texture,transparent:true,side:T.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));label.name='Air Ted fuselage lettering '+(side>0?'starboard':'port');labels.push(label);
+ }
+ return labels;
+}
 export function createAirTed(){const group=new T.Group();group.name='Air Ted flyby';group.visible=false;
  const enamel=new T.MeshStandardMaterial({color:'#e9e4da',roughness:.32,metalness:.35});
  const crimson=new T.MeshStandardMaterial({color:'#a82c2a',roughness:.3,metalness:.3});
@@ -35,9 +74,10 @@ export function createAirTed(){const group=new T.Group();group.name='Air Ted fly
  const spinner=part(group,new T.ConeGeometry(.13,.23,20),aluminum,-1.68,0,0);spinner.rotation.z=Math.PI/2;
  for(let i=0;i<5;i++){for(const side of [-1,1])part(group,new T.SphereGeometry(.012,6,4),aluminum,-1.1+i*.19,.06,side*.267);box(group,.055,.07,.018,'#323837',-.98+i*.07,-.02,.226);}
  box(group,2.6,.016,.016,'#62635a',2.8,0,0);
- const c=document.createElement('canvas');c.width=1024;c.height=256;const ctx=c.getContext('2d');ctx.fillStyle='#fff2c8';ctx.fillRect(0,0,1024,256);ctx.fillStyle='#b32a2e';ctx.font='bold 150px sans-serif';ctx.textAlign='center';ctx.fillText('Air Ted',512,183);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const banner=part(group,new T.PlaneGeometry(3.3,.85),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}),4.8,0,0);banner.rotation.x=-.45;
- return {group,prop,banner,start:0,until:0,direction:-1,next:performance.now()+120000};}
-export function startAirTed(r,time){if(time<r.until)return false;r.direction=-r.direction;r.start=time;r.until=time+6500;r.next=time+180000+Math.random()*150000;return true;}
+ const livery=airTedLivery(group);
+ const c=document.createElement('canvas');c.width=1536;c.height=384;const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const banner=part(group,new T.PlaneGeometry(4.6,1.15),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}),5.4,0,0);banner.rotation.x=-.45;
+ const rig={group,prop,banner,livery,bannerCanvas:c,messageIndex:-1,message:'',start:0,until:0,direction:-1,next:performance.now()+120000};paintAirTedBanner(rig,'Bag Chew');return rig;}
+export function startAirTed(r,time){if(time<r.until)return false;const message=chooseAirTedMessage(r.messageIndex);r.messageIndex=message.index;paintAirTedBanner(r,message.text);r.direction=-r.direction;r.start=time;r.until=time+6500;r.next=time+180000+Math.random()*150000;return true;}
 export function updateAirTed(r,time,camera){const u=(time-r.start)/6500;r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return 0;r.group.position.set(r.direction*(19.5-u*39),3.8+Math.sin(u*Math.PI)*.3,1.4);r.group.rotation.set(0,r.direction===1?0:Math.PI,Math.sin(u*12)*.025);r.prop.rotation.x=time*.07;
  // Face the camera independently of the aircraft heading: never mirror the lettering.
  const facing=camera?camera.quaternion:new T.Quaternion().setFromEuler(new T.Euler(-.45,0,0));
