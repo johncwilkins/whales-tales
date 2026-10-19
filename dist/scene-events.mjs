@@ -57,6 +57,14 @@ function airTedLivery(group){
  }
  return labels;
 }
+function obviousAirTedMarkings(group){
+ const c=document.createElement('canvas');c.width=1024;c.height=256;const ctx=c.getContext('2d');ctx.clearRect(0,0,1024,256);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 200px sans-serif';ctx.lineJoin='round';ctx.lineWidth=24;ctx.strokeStyle='#6f1319';ctx.strokeText('AIR TED',512,136);ctx.fillStyle='#fff6d5';ctx.fillText('AIR TED',512,136);
+ const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const ink=new T.MeshBasicMaterial({map:tex,transparent:true,side:T.DoubleSide,depthWrite:false});
+ const wings=[];for(const side of [-1,1]){const label=part(group,new T.PlaneGeometry(1.55,.43),ink,-.2,.16,side*1.16);label.rotation.set(-Math.PI/2,0,Math.PI/2);label.name='AIR TED upper-wing marking '+side;wings.push(label);}
+ // Keep the aircraft identity large and readable from every table camera, above its silhouette.
+ const nameplate=part(group,new T.PlaneGeometry(2.85,.71),ink,0,1.05,0);nameplate.name='AIR TED aircraft name';
+ return {wings,nameplate};
+}
 export function createAirTed(){const group=new T.Group();group.name='Air Ted flyby';group.visible=false;
  const enamel=new T.MeshStandardMaterial({color:'#e9e4da',roughness:.32,metalness:.35});
  const crimson=new T.MeshStandardMaterial({color:'#a82c2a',roughness:.3,metalness:.3});
@@ -74,14 +82,14 @@ export function createAirTed(){const group=new T.Group();group.name='Air Ted fly
  const spinner=part(group,new T.ConeGeometry(.13,.23,20),aluminum,-1.68,0,0);spinner.rotation.z=Math.PI/2;
  for(let i=0;i<5;i++){for(const side of [-1,1])part(group,new T.SphereGeometry(.012,6,4),aluminum,-1.1+i*.19,.06,side*.267);box(group,.055,.07,.018,'#323837',-.98+i*.07,-.02,.226);}
  box(group,2.6,.016,.016,'#62635a',2.8,0,0);
- const livery=airTedLivery(group);
+ const livery=airTedLivery(group),identity=obviousAirTedMarkings(group);
  const c=document.createElement('canvas');c.width=1536;c.height=384;const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const banner=part(group,new T.PlaneGeometry(4.6,1.15),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}),5.4,0,0);banner.rotation.x=-.45;
- const rig={group,prop,banner,livery,bannerCanvas:c,messageIndex:-1,message:'',start:0,until:0,direction:-1,next:performance.now()+120000};paintAirTedBanner(rig,'Bag Chew');return rig;}
+ const rig={group,prop,banner,livery,identity,bannerCanvas:c,messageIndex:-1,message:'',start:0,until:0,direction:-1,next:performance.now()+120000};paintAirTedBanner(rig,'Bag Chew');return rig;}
 export function startAirTed(r,time){if(time<r.until)return false;const message=chooseAirTedMessage(r.messageIndex);r.messageIndex=message.index;paintAirTedBanner(r,message.text);r.direction=-r.direction;r.start=time;r.until=time+6500;r.next=time+180000+Math.random()*150000;return true;}
 export function updateAirTed(r,time,camera){const u=(time-r.start)/6500;r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return 0;r.group.position.set(r.direction*(19.5-u*39),3.8+Math.sin(u*Math.PI)*.3,1.4);r.group.rotation.set(0,r.direction===1?0:Math.PI,Math.sin(u*12)*.025);r.prop.rotation.x=time*.07;
  // Face the camera independently of the aircraft heading: never mirror the lettering.
  const facing=camera?camera.quaternion:new T.Quaternion().setFromEuler(new T.Euler(-.45,0,0));
- r.group.updateMatrixWorld(true);r.banner.quaternion.copy(r.group.getWorldQuaternion(new T.Quaternion()).invert()).multiply(facing);
+ r.group.updateMatrixWorld(true);r.banner.quaternion.copy(r.group.getWorldQuaternion(new T.Quaternion()).invert()).multiply(facing);r.identity.nameplate.quaternion.copy(r.banner.quaternion);
  return Math.sin(Math.PI*Math.max(0,Math.min(1,(u-.2)/.65)))*.6;}
 function throwingRig(avatar){
  const arm=avatar.userData.arms[1],hand=avatar.userData.hands[1];const forearm=part(avatar,new T.CylinderGeometry(.065,.055,1,8),'#cba28b');forearm.visible=false;
