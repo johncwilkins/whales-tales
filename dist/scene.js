@@ -196,7 +196,7 @@ function createCompanion(character){
 let tubbyCDs=null;
 let jointProp=null,gagIndex=-1,gagNotice=null;
 const pongActors=[];let backgroundSmoker=null;
-function refreshBackgroundSmoker(){if(backgroundSmoker){scene.remove(backgroundSmoker.avatar);backgroundSmoker.avatar.traverse(o=>{o.geometry?.dispose();});backgroundSmoker=null;}if(!people.some(p=>['levitt','sapperstien'].includes(p.characterId)))return;const used=new Set([...people.map(p=>p.characterId),...pongActors.map(p=>p.avatar.userData.characterId)]);const profile=Object.values(CHARACTERS).find(c=>!used.has(c.id));const actor=createAvatar(profile,31);actor.avatar.position.set(-4.8,0,-4.2);actor.avatar.rotation.y=.4;actor.avatar.name='Background smoker';scene.add(actor.avatar);backgroundSmoker=attachBackgroundSmoke(actor.avatar);}
+function refreshBackgroundSmoker(){if(backgroundSmoker){scene.remove(backgroundSmoker.avatar);backgroundSmoker.avatar.traverse(o=>{o.geometry?.dispose();});backgroundSmoker=null;}if(!people.some(p=>['levitt','sapperstien'].includes(p.characterId)))return;const used=new Set([...people.map(p=>p.characterId),...pongActors.map(p=>p.avatar.userData.characterId)]);const profile=Object.values(CHARACTERS).find(c=>!used.has(c.id));const actor=createAvatar(profile,31);actor.avatar.userData.characterId=profile.id;actor.avatar.position.set(-4.8,0,-4.2);actor.avatar.rotation.y=.4;actor.avatar.name='Background smoker';scene.add(actor.avatar);backgroundSmoker=attachBackgroundSmoke(actor.avatar);}
 
 export function setPongPlayers(){
  const chosen=choosePongCast(people.map(p=>p.characterId));for(const r of tubeActors){r.avatar.removeFromParent();scene.remove(r.group);r.group.traverse(o=>{if(o!==r.avatar)o.geometry?.dispose();});}tubeActors.length=0;
