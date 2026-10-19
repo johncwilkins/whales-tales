@@ -1,3 +1,4 @@
+import {CHARACTERS as CHARACTERS_FOR_TREE} from './roster.mjs';
 import * as T from './vendor/three.module.js';
 const mat=c=>new T.MeshStandardMaterial({color:c,roughness:.65});
 function part(g,geo,color,x=0,y=0,z=0){const m=new T.Mesh(geo,typeof color==='string'?mat(color):color);m.position.set(x,y,z);g.add(m);return m;}
@@ -83,12 +84,13 @@ export function createAirTed(){const group=new T.Group();group.name='Air Ted fly
  for(let i=0;i<5;i++){for(const side of [-1,1])part(group,new T.SphereGeometry(.012,6,4),aluminum,-1.1+i*.19,.06,side*.267);box(group,.055,.07,.018,'#323837',-.98+i*.07,-.02,.226);}
  box(group,2.6,.016,.016,'#62635a',2.8,0,0);
  const livery=airTedLivery(group),identity=obviousAirTedMarkings(group);
- const c=document.createElement('canvas');c.width=1536;c.height=384;const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const banner=part(group,new T.PlaneGeometry(4.6,1.15),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}),5.4,0,0);banner.rotation.x=-.45;
+ const c=document.createElement('canvas');c.width=1536;c.height=384;const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const banner=part(group,new T.PlaneGeometry(4.6,1.15,32,6),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}),5.4,0,0);banner.rotation.x=-.45;
  const rig={group,prop,banner,livery,identity,bannerCanvas:c,messageIndex:-1,message:'',start:0,until:0,direction:-1,next:performance.now()+120000};paintAirTedBanner(rig,'Bag Chew');return rig;}
 export function startAirTed(r,time){if(time<r.until)return false;const message=chooseAirTedMessage(r.messageIndex);r.messageIndex=message.index;paintAirTedBanner(r,message.text);r.direction=-r.direction;r.start=time;r.until=time+6500;r.next=time+180000+Math.random()*150000;return true;}
 export function updateAirTed(r,time,camera){const u=(time-r.start)/6500;r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return 0;r.group.position.set(r.direction*(19.5-u*39),3.8+Math.sin(u*Math.PI)*.3,1.4);r.group.rotation.set(0,r.direction===1?0:Math.PI,Math.sin(u*12)*.025);r.prop.rotation.x=time*.07;
  // Face the camera independently of the aircraft heading: never mirror the lettering.
  const facing=camera?camera.quaternion:new T.Quaternion().setFromEuler(new T.Euler(-.45,0,0));
+ const cloth=r.banner.geometry.attributes.position,uv=r.banner.geometry.attributes.uv;for(let i=0;i<cloth.count;i++){const u=uv.getX(i),v=uv.getY(i),wave=Math.sin(time*.009-u*12);cloth.setXYZ(i,(u-.5)*4.6,(v-.5)*1.15+u*.065*Math.sin(time*.007-u*10),u*(.06+.12*u)*wave);}cloth.needsUpdate=true;r.banner.geometry.computeVertexNormals();
  r.group.updateMatrixWorld(true);r.banner.quaternion.copy(r.group.getWorldQuaternion(new T.Quaternion()).invert()).multiply(facing);
  return Math.sin(Math.PI*Math.max(0,Math.min(1,(u-.2)/.65)))*.6;}
 function throwingRig(avatar){
@@ -163,3 +165,32 @@ export function createTubbyCDs(ids){
  return group;
 }
 export function placeTubbyCDs(group,onCruiser){if(!group)return;group.position.set(onCruiser?-4.4:-8,2.005,onCruiser?-3.9:-5.2);group.scale.set(onCruiser?.6:1,1,onCruiser?.65:1);group.getObjectByName('Deck side bar').visible=onCruiser;}
+
+export function chooseTreeCrew(seated,otherBackground=[],random=Math.random){const used=new Set([...seated,...otherBackground]);const available=Object.keys(CHARACTERS_FOR_TREE).filter(id=>!used.has(id)),chosen=[];while(chosen.length<3&&available.length)chosen.push(available.splice(Math.min(available.length-1,Math.floor(random()*available.length)),1)[0]);return chosen;}
+export function createChristmasTree(){
+ const group=new T.Group();group.name='Old Christmas tree procession';group.visible=false;
+ const tree=new T.Group();tree.name='Huge old Christmas tree';tree.position.set(1.3,.92,0);tree.rotation.z=Math.PI/2;group.add(tree);
+ const trunk=part(tree,new T.CylinderGeometry(.065,.17,5.7,12),'#6c4b2e',0,2.7,0);trunk.name='Dragging tree trunk';
+ const leaves=new T.MeshStandardMaterial({color:'#4e5935',roughness:1}),dead=new T.MeshStandardMaterial({color:'#75613d',roughness:1});
+ for(let tier=0;tier<12;tier++){const y=.5+tier*.41,radius=1.45*(1-y/6);for(let j=0;j<5;j++){const a=j*Math.PI*.4+tier*.71,len=radius*(.75+Math.sin(tier*4+j)*.15),twig=part(tree,new T.CylinderGeometry(.013,.035,len,5),'#765739',Math.cos(a)*len*.5,y,Math.sin(a)*len*.5);twig.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3(Math.cos(a),.12,Math.sin(a)).normalize());const needles=part(tree,new T.ConeGeometry(len*.28,.75,7),((tier+j)%5===0)?dead:leaves,Math.cos(a)*len*.75,y+.15,Math.sin(a)*len*.75);needles.rotation.set(Math.sin(a)*.65,0,-Math.cos(a)*.65);}}
+ const ropes=Array.from({length:3},()=>{const line=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3()]),new T.LineBasicMaterial({color:'#b5a27a'}));group.add(line);return line;});
+ const fallen=new T.InstancedMesh(new T.BoxGeometry(.012,.018,.09),dead,38);fallen.name='Shed brown needles';const matrix=new T.Matrix4();for(let i=0;i<38;i++){matrix.makeRotationY(i*2.4);matrix.setPosition(-4+(i*.217)%5,.025,Math.sin(i*3.3)*.9);fallen.setMatrixAt(i,matrix);}group.add(fallen);
+ return {group,tree,ropes,fallen,crew:[],start:-Infinity,until:0,duration:15000,next:performance.now()+180000+Math.random()*90000};
+}
+export function clearTreeCrew(r){for(const p of r.crew){p.avatar.removeFromParent();p.avatar.traverse(o=>o.geometry?.dispose());}r.crew=[];r.until=0;r.group.visible=false;}
+export function startChristmasTree(r,time,ids,makeAvatar,onCruiser=false){
+ if(onCruiser||time<r.until||ids.length!==3)return null;clearTreeCrew(r);r.start=time;r.until=time+r.duration;r.next=time+300000+Math.random()*180000;
+ for(const [i,id] of ids.entries()){const p=makeAvatar(id,i);p.avatar.name=id+' dragging Christmas tree';p.avatar.position.set(2.2+i*.67,0,i===0?-.65:i===1?.6:0);p.avatar.rotation.y=Math.PI/2;p.avatar.userData.characterId=id;r.group.add(p.avatar);
+  // Walking legs replace the static seated lower-body meshes for these background actors.
+  for(const o of p.avatar.children)if(o.isMesh&&o.position.y<.98)o.visible=false;
+  const legs=[];for(const side of [-1,1]){const pivot=new T.Group();pivot.position.set(side*.18,.98,0);p.avatar.add(pivot);part(pivot,new T.CapsuleGeometry(.092,.69,3,8),'#3f4549',0,-.44,0);box(pivot,.2,.12,.33,'#242725',0,-.87,.08);legs.push(pivot);}
+  r.crew.push({...p,id,legs});
+ }updateChristmasTree(r,time);return {duration:r.duration,ids:[...ids]};
+}
+export function updateChristmasTree(r,time){
+ r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return false;const u=(time-r.start)/r.duration,sec=(time-r.start)/1000;r.group.position.set(-17+u*34,0,-6.3);r.tree.rotation.x=Math.sin(sec*2.1)*.025;r.tree.position.y=.92+Math.sin(sec*6)*.025;
+ for(const [i,p] of r.crew.entries()){const stride=sec*5.4+i*1.8;p.avatar.position.y=Math.abs(Math.sin(stride))*.035;p.avatar.rotation.z=-.12;for(const [j,leg] of p.legs.entries())leg.rotation.x=Math.sin(stride+j*Math.PI)*.38;if(p.head)p.head.rotation.z=Math.sin(stride*.5)*.035;
+  for(let j=0;j<(p.avatar.userData.hands||[]).length;j++){const hand=p.avatar.userData.hands[j],arm=p.avatar.userData.arms[j],side=j===0?-1:1;hand.position.set(side*.32,1.08,-.35);if(arm){const shoulder=new T.Vector3(side*.3,1.65,0),delta=hand.position.clone().sub(shoulder);arm.position.copy(shoulder).add(hand.position).multiplyScalar(.5);arm.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());}}
+  p.avatar.updateMatrixWorld(true);const hand=p.avatar.userData.hands?.[1],point=hand?hand.getWorldPosition(new T.Vector3()):p.avatar.getWorldPosition(new T.Vector3());r.group.worldToLocal(point);const positions=r.ropes[i].geometry.attributes.position;positions.setXYZ(0,1.3,.92,0);positions.setXYZ(1,point.x,point.y,point.z);positions.needsUpdate=true;r.ropes[i].geometry.computeBoundingSphere();
+ }return true;
+}
