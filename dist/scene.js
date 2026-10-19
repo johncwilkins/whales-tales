@@ -1,5 +1,5 @@
 import {createSantaDance,placeSantaDance,startSantaDance,updateSantaDance,cancelSantaDance} from './santa-dance.mjs';
-import {needsCruiser,needsSpotlight,nerfPair,createCruiser,createTube,createAirTed,startAirTed,updateAirTed,createNerf,updateNerf,createBeerThrow,updateBeerThrow,createPizza,createTubbyCDs,placeTubbyCDs} from './scene-events.mjs';
+import {chooseTreeCrew,createChristmasTree,startChristmasTree,updateChristmasTree,clearTreeCrew,needsCruiser,needsSpotlight,nerfPair,createCruiser,createTube,createAirTed,startAirTed,updateAirTed,createNerf,updateNerf,createBeerThrow,updateBeerThrow,createPizza,createTubbyCDs,placeTubbyCDs} from './scene-events.mjs';
 import {createVomitRig,startVomit,updateVomit,createJointProp,createDanceRig,startDance,updateDance,attachBackgroundSmoke,updateBackgroundSmoke} from './party-gags.mjs';
 import {attachSafetyRig,updateSafetyPose} from './referee.mjs';
 import {attachCelebrationRig,updateCelebrationPose,startCelebration,attachGeneralRig,startGeneral,updateGeneralPose,attachHairFire,startHairFire,updateHairFire,attachAttRig,startAttPose,updateAttPose,runSignatureMoves} from './celebrations.mjs';
@@ -97,7 +97,7 @@ function paddle(x){const g=new T.Group();pong.add(g);g.position.set(x,1.9,0);con
 const personColors=['#b9c88a','#b56443','#57777b','#c2964e','#725b81','#558077','#9b5961','#7483a0','#b49c79'];
 const names=HOUSE_NAMES;
 let voiceIndex=-1,bubbleIndex=-1,bubbleEl=null,bubbleUntil=0,bubblesEnabled=true;
-const cruiser=createCruiser();scene.add(cruiser.group);cruiser.group.visible=false;let onCruiser=false;const tubeActors=[];const airTed=createAirTed();scene.add(airTed.group);let nerf=null,beerThrows=[];
+const cruiser=createCruiser();scene.add(cruiser.group);cruiser.group.visible=false;let onCruiser=false;const tubeActors=[];const airTed=createAirTed();scene.add(airTed.group);const christmasTree=createChristmasTree();scene.add(christmasTree.group);let nerf=null,beerThrows=[];
 function createAvatar(character,i){
  const isBVN=character?.id==='bvn',isTichanski=character?.id==='tichanski',isBell=character?.id==='bell',isSapperstien=character?.id==='sapperstien',isMcLaen=character?.id==='mclaen',isTubby=character?.id==='tubby',isBrodeur=character?.id==='brodeur',isKomar=character?.id==='komar',isWargo=character?.id==='wargo',isPekalsky=character?.id==='pekalsky',isSaunders=character?.id==='saunders',isRose=character?.id==='rose',isMartens=character?.id==='martens',isRueben=character?.id==='rueben',isCindy=character?.id==='cindy',isColman=character?.id==='colman',isRecker=character?.id==='recker',isAtt=character?.id==='att',isWilkins=character?.id==='wilkins',isGraham=character?.id==='graham',isLefko=character?.id==='lefko',isLevitt=character?.id==='levitt',isHeard=character?.id==='heard',isDauenheimer=character?.id==='dauenheimer',isWatson=character?.id==='watson',isRooks=character?.id==='rooks';
  const shirt=mat(character?.shirt||personColors[i]);const skin=mat(character?.skin||['#d7a378','#b77a57','#ebba91','#ab7354','#d3a080','#e1b58b','#bd8e69','#d3a986','#936447'][i]);const hair=mat(character?.hair||['#514338','#5b2c1e','#2a2522','#35201c','#69675e','#a27b42','#58453c','#3c2e29','#232322'][i]);
@@ -208,7 +208,7 @@ export function setPongPlayers(){
   const danceRig=createDanceRig(actor.avatar.parent,actor.avatar,j+20);const companionDance=null;pongActors.push({...actor,hand,side,danceRig,companionDance,companion});
  }
 }
-export function seatPlayers(n){cancelSantaDance(santaDance);for(const p of people){scene.remove(p.group);p.label.remove();p.group.traverse(o=>{if(o.geometry)o.geometry.dispose()})}people.length=0;clearBubble();for(let i=0;i<n;i++){
+export function seatPlayers(n){clearTreeCrew(christmasTree);cancelSantaDance(santaDance);for(const p of people){scene.remove(p.group);p.label.remove();p.group.traverse(o=>{if(o.geometry)o.geometry.dispose()})}people.length=0;clearBubble();for(let i=0;i<n;i++){
  const angle=i*Math.PI*2/n;const g=new T.Group();scene.add(g);g.position.set(-Math.sin(angle)*3.25,0,Math.cos(angle)*3.25);g.rotation.y=Math.PI+angle*-1;
  // Face the center using a local forward axis of +z.
  g.lookAt(0,0,0);
@@ -244,6 +244,7 @@ let nextHairFireRound=2;
 export function roundVisuals(round){if(round<nextHairFireRound)return;const actor=people.find(p=>p.characterId==='martens'&&!p.away)||pongActors.find(p=>p.avatar.userData.characterId==='martens');if(actor&&startHairFire(actor.head,performance.now()))nextHairFireRound=round+4+Math.floor(Math.random()*4);}
 export function previewSignatureMoves(){const now=performance.now();let n=runSignatureMoves([...people,...pongActors],now);for(const p of people){if(p.characterId!=='bvn'||p.away)continue;const target=people.find(q=>q!==p&&!q.away);if(target&&!beerThrows.some(r=>r.thrower===p)){beerThrows.push(createBeerThrow(scene,p,target,now));n++;}}return n;}
 export function previewSanta(withElf=false){if(performance.now()<santaDance.until)return null;placeSantaDance(santaDance,onCruiser,tubbyCDs);return startSantaDance(santaDance,performance.now(),withElf);}
+export function previewChristmasTree(){if(onCruiser)return null;const ids=chooseTreeCrew(people.map(p=>p.characterId),[...pongActors.map(p=>p.avatar.userData.characterId),backgroundSmoker?.avatar.userData.characterId]);return startChristmasTree(christmasTree,performance.now(),ids,(id,i)=>createAvatar(CHARACTERS[id],i+40),onCruiser);}
 export function previewAirTed(){startAirTed(airTed,performance.now());}
 export function previewStickDance(){const now=performance.now();for(const p of [...people,...pongActors]){if(p.away)continue;startDance(p.danceRig,now);if(p.companionDance)startDance(p.companionDance,now);}return 5000;}
 export function previewVomit(){if(gagIndex>=0&&performance.now()<people[gagIndex]?.vomitRig.until)return null;const available=people.map((p,i)=>i).filter(i=>i>0&&!people[i].away);if(!available.length)return null;gagIndex=available[Math.floor(Math.random()*available.length)];const p=people[gagIndex];startVomit(p.vomitRig,performance.now());if(gagNotice)gagNotice.remove();gagNotice=document.createElement('div');gagNotice.className='gag-caption';gagNotice.textContent=p.name+' needs a moment…';mount.append(gagNotice);return{index:gagIndex,duration:p.vomitRig.duration};}
@@ -289,6 +290,7 @@ function animate(t){requestAnimationFrame(animate);if(document.hidden||!mount.cl
  for(const [j,r] of tubeActors.entries()){r.group.position.y=-.45+Math.sin(sec*1.5+j)*.12;r.group.rotation.z=Math.sin(sec+j)*.08;}for(const [j,wave] of cruiser.waves.entries())wave.position.y=-.69+Math.sin(sec+j)*.025;
  if(t>=airTed.next)startAirTed(airTed,t);const duck=updateAirTed(airTed,t,camera);for(const p of [...people,...pongActors])if(!p.away){p.head.position.y-=duck;p.avatar.rotation.x=duck*.35;}
  if(nerf)updateNerf(nerf,t);beerThrows=beerThrows.filter(r=>{if(updateBeerThrow(r,t))return true;r.group.removeFromParent();r.group.traverse(o=>o.geometry?.dispose());return false;});
+ if(!onCruiser&&t>=christmasTree.next)previewChristmasTree();updateChristmasTree(christmasTree,t);
  updateSantaDance(santaDance,t);
  renderer.render(scene,camera);
 }seatPlayers(6);resize();requestAnimationFrame(animate);
