@@ -21,3 +21,13 @@ startFunnelVisit(r,20000,seated,{originals:seated,random:()=>0});const again=sta
 startFunnelVisit(r,30000,seated,{random:()=>0});seated[1].away=true;assert(!updateFunnelVisit(r,31000));assert(seated[1].beerCup.visible);seated[1].away=false;
 console.log('Passed: Carson appears immediately on the tabletop with the funnel, stays there throughout the routine, drains the beer through a mouth-connected hose, disappears at completion and restores the seated player and cups.');
 const fs=await import('node:fs');const sceneSource=fs.readFileSync(new URL('../dist/scene.js',import.meta.url),'utf8');const previewSource=sceneSource.slice(sceneSource.indexOf('export function previewFunnel('),sceneSource.indexOf('export function previewChristmasTree(')).replace('export function','function');let cleared=0,forced=false;const activeTree={until:999999};const preview=new Function('performance','christmasTree','clearTreeCrew','startFunnelVisit','funnelVisit','people','cruiser','onCruiser','pongActors','backgroundSmoker',previewSource+';return previewFunnel')({now:()=>100},activeTree,()=>cleared++,(_r,_t,_p,opts)=>{forced=opts.force;return {target:'Recker'}},r,seated,{cabinDoor:null},false,[],null);assert.equal(preview(),null);assert.equal(cleared,0);assert.equal(preview({force:true}).target,'Recker');assert.equal(cleared,1);assert(forced);console.log('Passed: a queued funnel clears a conflicting tree at the point boundary.');
+
+// Check world-space orientation, not only the actor's root position.
+for(let count=2;count<=9;count++)for(let seat=0;seat<count;seat++){
+ const angle=seat*Math.PI*2/count,target=person('target',Math.sin(angle)*3.25,Math.cos(angle)*3.25);scene.add(target.group);
+ startFunnelVisit(r,40000,[target]);
+ for(const dt of [0,1000,3250,6400]){updateFunnelVisit(r,40000+dt);const headPosition=r.actor.head.getWorldPosition(new T.Vector3());assert(headPosition.y>3.5,`Carson must stay upright for ${count} seats, target ${seat}`);}
+ cancelFunnelVisit(r);scene.remove(target.group);
+}
+
+console.log('Passed: Carson stays upright above the tabletop for every recipient in every 2–9-player seating arrangement.');
