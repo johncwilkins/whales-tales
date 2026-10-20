@@ -1,4 +1,5 @@
 export const CHARACTERS={
+ carson:{id:'carson',name:'Carson',description:'Stocky build, short black hair, navy polo and a limping walk',shirt:'#324c69',skin:'#cda087',hair:'#171919'},
  bvn:{id:'bvn',name:'BVN',description:'Dark parted hair, broad smile, blue-gray suit, white shirt and navy tie',shirt:'#526273',skin:'#cba28b',hair:'#292820'},
  tichanski:{id:'tichanski',name:'Tichanski',description:'Thick short dark-brown hair, broad smile, pale-blue striped dress shirt and yellow patterned tie',shirt:'#b4c8d1',skin:'#d7ae97',hair:'#40372b'},
  bell:{id:'bell',name:'Bell',description:'Red baseball cap, thin silver glasses, broad smile, navy polo over white undershirt',shirt:'#354f69',skin:'#d3ae99',hair:'#938b78'},

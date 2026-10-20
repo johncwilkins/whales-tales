@@ -5,7 +5,7 @@ import {chatterGap,chooseChatter} from './chatter.mjs';
 import {responseDelay} from './timing.mjs';
 import {pickCallout,pickCeremonyCallout} from './callouts.mjs';
 import {unlockSound,setSoundEnabled,playCue,playBelch,stopBelch} from './sound.js';
-import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety,previewSignatureMoves,previewVomit,previewStickDance,previewAirTed,previewChristmasTree,previewSanta,roundVisuals} from './scene.js';
+import {people,seatPlayers,setActive,showBubble,clearBubble,changeView,setTalking,playerDrinks,clearFlags,setCeremony,setBubblesEnabled,setAway,refereeSafety,previewSignatureMoves,previewVomit,previewStickDance,previewAirTed,previewChristmasTree,previewFunnel,previewSanta,roundVisuals} from './scene.js';
 import {MODES,chooseAlternate,specialGap,modeAnnouncement} from './modes.mjs';
 import {nextStep,validResponse,penaltyFor,keyResponse} from './rules.mjs';
 let selfGolden=false;
@@ -33,7 +33,7 @@ refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?
 const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
 const pace=()=>options[$('#pace').value];
 let modeId='regular',direction=1,nextSpecial=1+specialGap(),numberDraft='',numberTimer=0,botPending=null,humanPending=null;
-let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5,nextVomitRound=10,nextSantaRound=18,nextBelchTurn=12;
+let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5,nextVomitRound=10,nextSantaRound=18,nextBelchTurn=12,nextFunnelRound=12;
 const mode=()=>({...MODES[modeId],direction});
 const maxCall=()=>count*(MODES[modeId].multiplier||1);
 function clearNumberDraft(){clearTimeout(numberTimer);numberDraft='';}
@@ -96,6 +96,13 @@ async function chatterBeat(myToken){
  status('BETWEEN ROUNDS','A word at the table.','The next round starts after the chatter.');
  for(let j=0;j<chat.lines.length;j++){await say(speakers[j],chat.lines[j],myToken,{ceremony:true});if(myToken!==token||!running||state!==before)return false;}
  return true;
+}
+
+async function rareFunnelBeat(myToken){
+ if(myToken!==token||!running||paused||state.phase!=='restart'||round<nextFunnelRound||Math.random()>=.025)return true;
+ const result=previewFunnel();if(!result)return true;nextFunnelRound=round+25+Math.floor(Math.random()*20);
+ status('CARSON’S BEER FUNNEL',result.target+' takes the funnel.','The next round starts after Carson’s visit.');
+ await wait(result.duration);return myToken===token&&running&&state.phase==='restart';
 }
 
 async function rareSantaBeat(myToken){
@@ -170,7 +177,7 @@ async function restartLoser(myToken){
   if(penalty.flag){playCue('flag');await say(shouter,pickCeremonyCallout('flag'),myToken,{ceremony:true});if(!alive())return;}
   else{await wait(1350);if(!alive())return;}
  }
- setCeremony(-1);if(!await rareSantaBeat(myToken))return;if(!await rareVomitBeat(myToken))return;if(!await bathroomBeat(myToken))return;if(!await voluntaryFlagsBeat(myToken))return;if(!await chatterBeat(myToken))return;
+ setCeremony(-1);if(!await rareFunnelBeat(myToken))return;if(!await rareSantaBeat(myToken))return;if(!await rareVomitBeat(myToken))return;if(!await bathroomBeat(myToken))return;if(!await voluntaryFlagsBeat(myToken))return;if(!await chatterBeat(myToken))return;
  setCeremony(loser,'restart');playCue('restart');ceremonyToast('restart','THE FLOOR IS '+(loser===0?'YOURS.':name.toUpperCase()+"’S."),'Whale’s Tales… calls tales on…');
  await wait(400);if(!alive())return;
  selectRoundMode();if(modeId!=='regular'){playCue('restart');ceremonyToast('alternate',MODES[modeId].name.toUpperCase(),MODES[modeId].description);}
@@ -229,7 +236,7 @@ $('#golden-chair').onchange=()=>{
 };
 
 $('#start').onclick=startRound;$('#mobile-start').onclick=startRound;$('#new-round').onclick=startRound;document.querySelectorAll('.response').forEach(b=>b.onclick=()=>respond(b.dataset.value));
-document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key.toLowerCase()==='c'){e.preventDefault();previewChristmasTree();return;}if(['p','l'].includes(e.key.toLowerCase())){e.preventDefault();previewSanta(e.key.toLowerCase()==='l');return;}if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewSignatureMoves())$('#last').textContent='Seat a player with a signature move to preview it with I.';return;}if(e.key.toLowerCase()==='t'){e.preventDefault();previewAirTed();return;}if(e.key.toLowerCase()==='f'){e.preventDefault();previewStickDance();return;}if(e.key.toLowerCase()==='b'){e.preventDefault();previewVomit();return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
+document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key.toLowerCase()==='n'){e.preventDefault();previewFunnel();return;}if(e.key.toLowerCase()==='c'){e.preventDefault();previewChristmasTree();return;}if(['p','l'].includes(e.key.toLowerCase())){e.preventDefault();previewSanta(e.key.toLowerCase()==='l');return;}if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewSignatureMoves())$('#last').textContent='Seat a player with a signature move to preview it with I.';return;}if(e.key.toLowerCase()==='t'){e.preventDefault();previewAirTed();return;}if(e.key.toLowerCase()==='f'){e.preventDefault();previewStickDance();return;}if(e.key.toLowerCase()==='b'){e.preventDefault();previewVomit();return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
  if(e.key.toLowerCase()==='q'){e.preventDefault();respond('nay',{belch:true});return;}
  const introMode={y:'olympic',r:'reverse',o:'oscillating',m:'modulus'}[e.key.toLowerCase()];if(introMode&&introOpen&&running&&!paused&&state.actor===0&&state.phase==='number'){e.preventDefault();chooseIntroMode(introMode);return}
  if(modeId==='modulus'&&running&&!paused&&state.phase!=='restart'){

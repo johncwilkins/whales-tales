@@ -13,10 +13,14 @@ export function createCruiser(){
  for(let i=0;i<29;i++)box(group,.39,.035,10.8,i%3?'#b59466':'#ad895b',-5.6+i*.4,-.065,0);
  for(const x of [-5.9,5.9]){box(group,.2,.6,11.8,'#eeeee3',x,.22,0);for(let z=-5;z<=5;z+=2){part(group,new T.CylinderGeometry(.035,.035,1.1,8),'#aebfc5',x,.9,z);}box(group,.055,.055,11.8,'#bdc9cc',x,1.45,0);}
  // Raised white cabin, dark wraparound windows and bow roof behind the players.
- box(group,5.8,2.8,2.1,'#f1f1e8',0,1.35,-5.7);box(group,5.4,1.15,.035,'#244554',0,2.05,-4.63);box(group,.15,1.2,.08,'#eaece6',0,2.05,-4.55);box(group,6.3,.18,2.7,'#faf9ed',0,2.83,-5.7);
+ // Cabin doorway has a genuine opening for Carson's entrance.
+ box(group,5.8,2.8,.12,'#f1f1e8',0,1.35,-6.7);for(const x of [-2.84,2.84])box(group,.12,2.8,2.1,'#f1f1e8',x,1.35,-5.7);
+ box(group,4.23,2.8,.12,'#f1f1e8',-.785,1.35,-4.65);box(group,.53,2.8,.12,'#f1f1e8',2.635,1.35,-4.65);box(group,1.04,.45,.12,'#f1f1e8',1.85,2.525,-4.65);
+ box(group,3.95,1.15,.035,'#244554',-.785,2.05,-4.57);box(group,.15,1.2,.08,'#eaece6',0,2.05,-4.55);box(group,6.3,.18,2.7,'#faf9ed',0,2.83,-5.7);
+ const cabinDoor=new T.Group();cabinDoor.name='Opening cabin door';cabinDoor.position.set(1.33,0,-4.55);group.add(cabinDoor);box(cabinDoor,1.04,2.3,.08,'#f5f0df',.52,1.15,0);box(cabinDoor,.75,.75,.025,'#244554',.52,1.75,.055);box(cabinDoor,.08,.045,.07,'#aebfc5',.9,1.05,.08);
  for(const x of [-4.4,4.4]){const ring=part(group,new T.TorusGeometry(.43,.12,8,24),'#f59d4e',x,.85,-5.35);ring.rotation.y=.1;}
  const waves=[];for(let i=0;i<35;i++){const w=box(group,1.2+(i%4)*.5,.012,.06,'#76bdc5',((i*7)%23)-11,-.69,-9-Math.floor(i/12)*3);waves.push(w);}
- return {group,sea,waves};
+ return {group,sea,waves,cabinDoor};
 }
 export function createTube(parent,avatar,index){const group=new T.Group();group.name='Inner-tube swimmer';parent.add(group);group.position.set(index?6.8:-6.8,-.45,-2.7-index*2);group.rotation.y=index?-.7:.7;avatar.removeFromParent();avatar.position.set(0,-.76,0);avatar.rotation.set(0,0,0);group.add(avatar);const tube=part(group,new T.TorusGeometry(.64,.22,12,32),index?'#e5ae47':'#498da6',0,.22,0);tube.rotation.x=Math.PI/2;return {group,avatar};}
 export const AIR_TED_MESSAGES=Object.freeze([
