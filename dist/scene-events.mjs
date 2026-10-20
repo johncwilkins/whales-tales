@@ -167,6 +167,24 @@ export function createTubbyCDs(ids){
 export function placeTubbyCDs(group,onCruiser){if(!group)return;group.position.set(onCruiser?-4.4:-8,2.005,onCruiser?-3.9:-5.2);group.scale.set(onCruiser?.6:1,1,onCruiser?.65:1);group.getObjectByName('Deck side bar').visible=onCruiser;}
 
 export function chooseTreeCrew(seated,otherBackground=[],random=Math.random){const used=new Set([...seated,...otherBackground]);const available=Object.keys(CHARACTERS_FOR_TREE).filter(id=>!used.has(id)),chosen=[];while(chosen.length<3&&available.length)chosen.push(available.splice(Math.min(available.length-1,Math.floor(random()*available.length)),1)[0]);return chosen;}
+export const TREE_DOORWAY={x:12,z:-6.3,width:3.7,height:3.6};
+export function createTreeDoorWalls(material){
+ const walls=new T.Group();walls.name='Side walls with tree procession doorways';const {z,width,height}=TREE_DOORWAY,left=z-width/2,right=z+width/2;
+ for(const x of [-12,12]){box(walls,.25,8,left+14,material,x,3.8,(-14+left)/2);box(walls,.25,8,10-right,material,x,3.8,(right+10)/2);box(walls,.25,7.8-height,width,material,x,(7.8+height)/2,z);}
+ return walls;
+}
+function createTreeDoors(){
+ const group=new T.Group();group.name='Christmas tree entrance and exit doors';const doors=[];
+ const oak=new T.MeshStandardMaterial({color:'#68492f',roughness:.56}),trim=new T.MeshStandardMaterial({color:'#99744b',roughness:.45}),brass=new T.MeshStandardMaterial({color:'#b89851',metalness:.7,roughness:.3});
+ for(const side of [-1,1]){const portal=new T.Group();portal.name=side<0?'Tree crew entrance':'Tree crew exit';portal.position.set(side*11.81,0,-6.3);portal.rotation.y=Math.PI/2;group.add(portal);
+  for(const x of [-1.87,1.87])box(portal,.18,3.7,.2,trim,x,1.85,0);box(portal,3.92,.2,.2,trim,0,3.65,0);box(portal,3.7,.035,.42,brass,0,.015,0);
+  const leaves=[];for(const hingeSide of [-1,1]){const hinge=new T.Group();hinge.position.x=hingeSide*1.8;portal.add(hinge);const center=-hingeSide*.88;box(hinge,1.76,3.5,.095,oak,center,1.76,0);for(const y of [.9,2.5]){box(hinge,1.4,1.25,.025,trim,center,y,.06);box(hinge,1.23,1.08,.028,oak,center,y,.08);}for(const face of [-1,1])box(hinge,.045,.45,.06,brass,-hingeSide*1.57,1.65,face*.1);leaves.push({hinge,hingeSide});}
+  doors.push({portal,side,leaves,open:0});
+ }
+ return {group,doors};
+}
+const treeEase=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
+function updateTreeDoors(r,time){const elapsed=time-r.start;for(const door of r.doors.doors){const amount=door.side<0?treeEase(elapsed/650)*(1-treeEase((elapsed-4600)/700)):treeEase((elapsed-10300)/700)*(1-treeEase((elapsed-15000)/800));door.open=amount;for(const leaf of door.leaves)leaf.hinge.rotation.y=door.side*leaf.hingeSide*amount*Math.PI*.49;}}
 export function createChristmasTree(){
  const group=new T.Group();group.name='Old Christmas tree procession';group.visible=false;
  const tree=new T.Group();tree.name='Huge old Christmas tree';tree.position.set(1.3,.92,0);tree.rotation.z=Math.PI/2;group.add(tree);
@@ -175,9 +193,9 @@ export function createChristmasTree(){
  for(let tier=0;tier<12;tier++){const y=.5+tier*.41,radius=1.45*(1-y/6);for(let j=0;j<5;j++){const a=j*Math.PI*.4+tier*.71,len=radius*(.75+Math.sin(tier*4+j)*.15),twig=part(tree,new T.CylinderGeometry(.013,.035,len,5),'#765739',Math.cos(a)*len*.5,y,Math.sin(a)*len*.5);twig.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3(Math.cos(a),.12,Math.sin(a)).normalize());const needles=part(tree,new T.ConeGeometry(len*.28,.75,7),((tier+j)%5===0)?dead:leaves,Math.cos(a)*len*.75,y+.15,Math.sin(a)*len*.75);needles.rotation.set(Math.sin(a)*.65,0,-Math.cos(a)*.65);}}
  const ropes=Array.from({length:3},()=>{const line=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3()]),new T.LineBasicMaterial({color:'#b5a27a'}));group.add(line);return line;});
  const fallen=new T.InstancedMesh(new T.BoxGeometry(.012,.018,.09),dead,38);fallen.name='Shed brown needles';const matrix=new T.Matrix4();for(let i=0;i<38;i++){matrix.makeRotationY(i*2.4);matrix.setPosition(-4+(i*.217)%5,.025,Math.sin(i*3.3)*.9);fallen.setMatrixAt(i,matrix);}group.add(fallen);
- return {group,tree,ropes,fallen,crew:[],start:-Infinity,until:0,duration:15000,next:performance.now()+180000+Math.random()*90000};
+ return {group,tree,ropes,fallen,doors:createTreeDoors(),crew:[],start:-Infinity,until:0,duration:15000,next:performance.now()+180000+Math.random()*90000};
 }
-export function clearTreeCrew(r){for(const p of r.crew){p.avatar.removeFromParent();p.avatar.traverse(o=>o.geometry?.dispose());}r.crew=[];r.until=0;r.group.visible=false;}
+export function clearTreeCrew(r){for(const p of r.crew){p.avatar.removeFromParent();p.avatar.traverse(o=>o.geometry?.dispose());}r.crew=[];r.until=0;r.start=-Infinity;r.group.visible=false;updateTreeDoors(r,0);}
 export function startChristmasTree(r,time,ids,makeAvatar,onCruiser=false){
  if(onCruiser||time<r.until||ids.length!==3)return null;clearTreeCrew(r);r.start=time;r.until=time+r.duration;r.next=time+300000+Math.random()*180000;
  for(const [i,id] of ids.entries()){const p=makeAvatar(id,i);p.avatar.name=id+' dragging Christmas tree';p.avatar.position.set(2.2+i*.67,0,i===0?-.65:i===1?.6:0);p.avatar.rotation.y=Math.PI/2;p.avatar.userData.characterId=id;r.group.add(p.avatar);
@@ -188,9 +206,9 @@ export function startChristmasTree(r,time,ids,makeAvatar,onCruiser=false){
  }updateChristmasTree(r,time);return {duration:r.duration,ids:[...ids]};
 }
 export function updateChristmasTree(r,time){
- r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return false;const u=(time-r.start)/r.duration,sec=(time-r.start)/1000;r.group.position.set(-17+u*34,0,-6.3);r.tree.rotation.x=Math.sin(sec*2.1)*.025;r.tree.position.y=.92+Math.sin(sec*6)*.025;
+ updateTreeDoors(r,time);r.group.visible=time>=r.start&&time<r.until;if(!r.group.visible)return false;const u=(time-r.start)/r.duration,sec=(time-r.start)/1000;r.group.position.set(-17+u*34,0,-6.3);r.tree.rotation.x=Math.sin(sec*2.1)*.025;r.tree.position.y=.92+Math.sin(sec*6)*.025;
  for(const [i,p] of r.crew.entries()){const stride=sec*5.4+i*1.8;p.avatar.position.y=Math.abs(Math.sin(stride))*.035;p.avatar.rotation.z=-.12;for(const [j,leg] of p.legs.entries())leg.rotation.x=Math.sin(stride+j*Math.PI)*.38;if(p.head)p.head.rotation.z=Math.sin(stride*.5)*.035;
-  for(let j=0;j<(p.avatar.userData.hands||[]).length;j++){const hand=p.avatar.userData.hands[j],arm=p.avatar.userData.arms[j],side=j===0?-1:1;hand.position.set(side*.32,1.08,-.35);if(arm){const shoulder=new T.Vector3(side*.3,1.65,0),delta=hand.position.clone().sub(shoulder);arm.position.copy(shoulder).add(hand.position).multiplyScalar(.5);arm.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());}}
+  for(let j=0;j<(p.avatar.userData.hands||[]).length;j++){const hand=p.avatar.userData.hands[j],arm=p.avatar.userData.arms[j],side=j===0?-1:1,pushingDoor=i===2&&j===0&&(sec<1.3||sec>10.2&&sec<11.6);hand.position.set(side*.32,pushingDoor?1.42:1.08,pushingDoor?.6:-.35);if(arm){const shoulder=new T.Vector3(side*.3,1.65,0),delta=hand.position.clone().sub(shoulder);arm.position.copy(shoulder).add(hand.position).multiplyScalar(.5);arm.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());}}
   p.avatar.updateMatrixWorld(true);const hand=p.avatar.userData.hands?.[1],point=hand?hand.getWorldPosition(new T.Vector3()):p.avatar.getWorldPosition(new T.Vector3());r.group.worldToLocal(point);const positions=r.ropes[i].geometry.attributes.position;positions.setXYZ(0,1.3,.92,0);positions.setXYZ(1,point.x,point.y,point.z);positions.needsUpdate=true;r.ropes[i].geometry.computeBoundingSphere();
  }return true;
 }
