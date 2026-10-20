@@ -33,7 +33,7 @@ refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?
 const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
 const pace=()=>options[$('#pace').value];
 let modeId='regular',direction=1,nextSpecial=1+specialGap(),numberDraft='',numberTimer=0,botPending=null,humanPending=null;
-let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5,nextVomitRound=10,nextSantaRound=18,nextBelchTurn=12,nextFunnelRound=12;
+let nextChatter=chatterGap(),lastChatter=-1,nextTubbyFlags=6,nextTubbyMexican=5,nextVomitRound=10,nextSantaRound=18,nextBelchTurn=12,nextFunnelRound=12,funnelRequestRound=null;
 const mode=()=>({...MODES[modeId],direction});
 const maxCall=()=>count*(MODES[modeId].multiplier||1);
 function clearNumberDraft(){clearTimeout(numberTimer);numberDraft='';}
@@ -98,10 +98,17 @@ async function chatterBeat(myToken){
  return true;
 }
 
+function queueFunnel(){
+ if(funnelRequestRound===null)funnelRequestRound=round+1;
+ $('#last').textContent='Carson’s funnel is queued for the end of the next point.';
+}
 async function rareFunnelBeat(myToken){
- if(myToken!==token||!running||paused||state.phase!=='restart'||round<nextFunnelRound||Math.random()>=.025)return true;
- const result=previewFunnel();if(!result)return true;nextFunnelRound=round+25+Math.floor(Math.random()*20);
- status('CARSON’S BEER FUNNEL',result.target+' takes the funnel.','The next round starts after Carson’s visit.');
+ if(myToken!==token||!running||paused||state.phase!=='restart')return true;
+ const requested=funnelRequestRound!==null;
+ if(requested?round<funnelRequestRound:round<nextFunnelRound||Math.random()>=.025)return true;
+ const result=previewFunnel({force:requested});if(!result)return true;
+ if(requested)funnelRequestRound=null;nextFunnelRound=round+25+Math.floor(Math.random()*20);
+ status('CARSON’S BEER FUNNEL',result.target+' takes the funnel.','The next point starts after Carson’s visit.');
  await wait(result.duration);return myToken===token&&running&&state.phase==='restart';
 }
 
@@ -236,7 +243,7 @@ $('#golden-chair').onchange=()=>{
 };
 
 $('#start').onclick=startRound;$('#mobile-start').onclick=startRound;$('#new-round').onclick=startRound;document.querySelectorAll('.response').forEach(b=>b.onclick=()=>respond(b.dataset.value));
-document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;const editing=/SELECT|TEXTAREA/.test(e.target.tagName)||e.target.tagName==='INPUT'&&!['checkbox','radio','range','button'].includes(e.target.type)||e.target.isContentEditable;if(editing)return;if(e.key.toLowerCase()==='n'){e.preventDefault();const result=previewFunnel({force:true});$('#last').textContent=result?'Carson is bringing the funnel for '+result.target+'.':'Carson needs a seated player to hold the funnel for.';return;}if(e.target.tagName==='INPUT')return;if(e.key.toLowerCase()==='c'){e.preventDefault();previewChristmasTree();return;}if(['p','l'].includes(e.key.toLowerCase())){e.preventDefault();previewSanta(e.key.toLowerCase()==='l');return;}if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewSignatureMoves())$('#last').textContent='Seat a player with a signature move to preview it with I.';return;}if(e.key.toLowerCase()==='t'){e.preventDefault();previewAirTed();return;}if(e.key.toLowerCase()==='f'){e.preventDefault();previewStickDance();return;}if(e.key.toLowerCase()==='b'){e.preventDefault();previewVomit();return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
+document.addEventListener('keydown',e=>{if(e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;const editing=/SELECT|TEXTAREA/.test(e.target.tagName)||e.target.tagName==='INPUT'&&!['checkbox','radio','range','button'].includes(e.target.type)||e.target.isContentEditable;if(editing)return;if(e.key.toLowerCase()==='n'){e.preventDefault();queueFunnel();return;}if(e.target.tagName==='INPUT')return;if(e.key.toLowerCase()==='c'){e.preventDefault();previewChristmasTree();return;}if(['p','l'].includes(e.key.toLowerCase())){e.preventDefault();previewSanta(e.key.toLowerCase()==='l');return;}if(e.key.toLowerCase()==='i'){e.preventDefault();if(!previewSignatureMoves())$('#last').textContent='Seat a player with a signature move to preview it with I.';return;}if(e.key.toLowerCase()==='t'){e.preventDefault();previewAirTed();return;}if(e.key.toLowerCase()==='f'){e.preventDefault();previewStickDance();return;}if(e.key.toLowerCase()==='b'){e.preventDefault();previewVomit();return;}if($('#rules').open||$('#configuration').open||/SELECT|INPUT|TEXTAREA/.test(e.target.tagName))return;
  if(e.key.toLowerCase()==='q'){e.preventDefault();respond('nay',{belch:true});return;}
  const introMode={y:'olympic',r:'reverse',o:'oscillating',m:'modulus'}[e.key.toLowerCase()];if(introMode&&introOpen&&running&&!paused&&state.actor===0&&state.phase==='number'){e.preventDefault();chooseIntroMode(introMode);return}
  if(modeId==='modulus'&&running&&!paused&&state.phase!=='restart'){
