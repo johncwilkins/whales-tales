@@ -1,3 +1,4 @@
+import {createClubRoom} from './club-room.mjs';
 import {createFunnelVisit,startFunnelVisit,updateFunnelVisit,cancelFunnelVisit} from './funnel.mjs';
 import {createSantaDance,placeSantaDance,startSantaDance,updateSantaDance,cancelSantaDance} from './santa-dance.mjs';
 import {createTreeDoorWalls,TREE_DOORWAY,chooseTreeCrew,createChristmasTree,startChristmasTree,updateChristmasTree,clearTreeCrew,needsCruiser,needsSpotlight,nerfPair,createCruiser,createTube,createAirTed,startAirTed,updateAirTed,createNerf,updateNerf,createBeerThrow,updateBeerThrow,createPizza,createTubbyCDs,placeTubbyCDs} from './scene-events.mjs';
@@ -18,7 +19,7 @@ const santaDance=createSantaDance();
 const scene=new T.Scene();scene.add(santaDance.group);scene.background=new T.Color('#201b19');scene.fog=new T.FogExp2('#211d19',.025);
 const camera=new T.PerspectiveCamera(43,1,.1,65);let view=0;try{view=Math.max(0,Math.min(2,Number(localStorage.getItem('whales-camera-view'))||0))}catch{}let active=-1,ceremonyIndex=-1,ceremonyKind='';
 const mat=(c,roughness=.8,metalness=0)=>new T.MeshStandardMaterial({color:c,roughness,metalness});
-const wood=mat('#795033'),darkWood=mat('#30221b'),brass=mat('#b3995f',.35,.65),black=mat('#1e2422'),green=mat('#264b39');
+const wood=mat('#795033'),darkWood=mat('#30221b'),brass=mat('#b3995f',.35,.65),black=mat('#1e2422'),green=mat('#642a32');
 function mesh(geo,material,parent=scene,x=0,y=0,z=0){const m=new T.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
 function box(w,h,d,m,p=scene,x=0,y=0,z=0){return mesh(new T.BoxGeometry(w,h,d),m,p,x,y,z)}
 function sphere(r,m,p=scene,x=0,y=0,z=0){return mesh(new T.SphereGeometry(r,24,16),m,p,x,y,z)}
@@ -27,23 +28,13 @@ const textureLoader=new T.TextureLoader();
 const plywoodMap=textureLoader.load('./assets/plywood.jpg');plywoodMap.colorSpace=T.SRGBColorSpace;plywoodMap.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
 const plywoodMat=new T.MeshStandardMaterial({map:plywoodMap,bumpMap:plywoodMap,bumpScale:.008,roughness:.7});
 const greenBoardMap=textureLoader.load('./assets/green-board.jpg');greenBoardMap.colorSpace=T.SRGBColorSpace;greenBoardMap.anisotropy=8;
-const timber=new T.MeshPhysicalMaterial({map:plywoodMap,bumpMap:plywoodMap,bumpScale:.01,roughness:.52,color:'#72523c',clearcoat:.2,clearcoatRoughness:.35});
+const timber=new T.MeshPhysicalMaterial({map:plywoodMap,bumpMap:plywoodMap,bumpScale:.01,roughness:.52,color:'#392821',clearcoat:.2,clearcoatRoughness:.35});
 // Soft rectangular light sources reflected in varnish, brass and bottle glass.
 const reflectionCanvas=document.createElement('canvas');reflectionCanvas.width=1024;reflectionCanvas.height=512;const reflections=reflectionCanvas.getContext('2d');const glow=reflections.createLinearGradient(0,0,0,512);glow.addColorStop(0,'#4c473d');glow.addColorStop(.5,'#81705a');glow.addColorStop(1,'#29261f');reflections.fillStyle=glow;reflections.fillRect(0,0,1024,512);reflections.fillStyle='#ffe4ad';for(const x of [130,460,790])reflections.fillRect(x,130,30,160);reflections.fillStyle='#c4cbd1';reflections.fillRect(270,170,95,100);const environment=new T.CanvasTexture(reflectionCanvas);environment.mapping=T.EquirectangularReflectionMapping;environment.colorSpace=T.SRGBColorSpace;const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromEquirectangular(environment).texture;scene.environmentIntensity=.55;environment.dispose();pmrem.dispose();
-function panelMaterial(index){const map=plywoodMap.clone();map.repeat.set(.28,1);map.offset.x=(index*.173)% .72;map.needsUpdate=true;return new T.MeshPhysicalMaterial({map,bumpMap:map,bumpScale:.015,color:index%3===0?'#75543e':'#856047',roughness:.48,clearcoat:.18,clearcoatRoughness:.5})}
+function panelMaterial(index){const map=plywoodMap.clone();map.repeat.set(.28,1);map.offset.x=(index*.173)% .72;map.needsUpdate=true;return new T.MeshPhysicalMaterial({map,bumpMap:map,bumpScale:.015,color:index%3===0?'#392821':'#453127',roughness:.48,clearcoat:.18,clearcoatRoughness:.5})}
 
-const tileCanvas=document.createElement('canvas');tileCanvas.width=512;tileCanvas.height=512;
-const tileCtx=tileCanvas.getContext('2d');tileCtx.fillStyle='#302f2a';tileCtx.fillRect(0,0,512,512);
-for(let row=0;row<4;row++)for(let col=0;col<4;col++){tileCtx.fillStyle=(row+col)%2?'#4a4434':'#3b392f';tileCtx.fillRect(col*128+3,row*128+3,122,122);tileCtx.strokeStyle='#ffffff15';tileCtx.strokeRect(col*128+5,row*128+5,118,118);}
-const tileMap=new T.CanvasTexture(tileCanvas);tileMap.colorSpace=T.SRGBColorSpace;tileMap.wrapS=tileMap.wrapT=T.RepeatWrapping;tileMap.repeat.set(5,5);
 const indoorShellStart=scene.children.length;
-box(25,.15,24,new T.MeshStandardMaterial({map:tileMap,roughness:.86}),scene,0,-.13,-2);
-box(25,8,.25,darkWood,scene,0,3.8,-10);scene.add(createTreeDoorWalls(darkWood));
-// Narrow photographic boards, recessed joints, raised dado and skirting.
-for(let i=0;i<34;i++){const x=-12.35+i*.74;box(.72,7.65,.09,panelMaterial(i),scene,x,3.8,-9.81)}
-for(let i=0;i<32;i++){const z=-9.6+i*.74,inDoor=Math.abs(z-TREE_DOORWAY.z)<TREE_DOORWAY.width/2+.36,h=inDoor?7.625-TREE_DOORWAY.height:7.65,y=inDoor?(7.625+TREE_DOORWAY.height)/2:3.8;box(.09,h,.72,panelMaterial(i+34),scene,-11.81,y,z);box(.09,h,.72,panelMaterial(i+66),scene,11.81,y,z)}
-for(const y of [.16,2.2,6.9]){box(24.9,y===.16?.26:.14,.16,timber,scene,0,y,-9.69);for(const x of [-11.69,11.69]){if(y>TREE_DOORWAY.height)box(.16,.14,23.8,timber,scene,x,y,2);else for(const [a,b] of [[-9.9,TREE_DOORWAY.z-TREE_DOORWAY.width/2],[TREE_DOORWAY.z+TREE_DOORWAY.width/2,13.9]])box(.16,y===.16?.26:.14,b-a,timber,scene,x,y,(a+b)/2)}}
-box(24,.035,.04,brass,scene,0,2.29,-9.59);
+const clubRoom=createClubRoom(plywoodMap);scene.add(clubRoom.group);
 
 scene.add(new T.HemisphereLight('#e1d4aa','#3e3730',2.2));const sun=new T.DirectionalLight('#ffdab0',2.8);sun.position.set(-3,9,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-11,right:11,top:11,bottom:-11});sun.shadow.bias=-.001;scene.add(sun);
 function lamp(x,z){cylinder(.03,.03,2,black,scene,x,6.4,z);cylinder(.28,.75,.55,mat('#31594b',.3,.3),scene,x,5.3,z);cylinder(.7,.7,.04,mat('#ffe8a6'),scene,x,5.02,z);const l=new T.PointLight('#ffd393',30,12,2);l.position.set(x,4.8,z);scene.add(l)}lamp(0,0);lamp(5,-5);lamp(-6,-6);
@@ -53,11 +44,6 @@ const tableStart=scene.children.length;
 cylinder(2.7,2.7,.23,darkWood,scene,0,1.5,0);cylinder(2.66,2.66,.045,brass,scene,0,1.64,0);cylinder(2.58,2.58,.045,plywoodMat,scene,0,1.67,0);cylinder(.35,.55,1.35,darkWood,scene,0,.72,0);cylinder(1.15,1.35,.16,darkWood,scene,0,.12,0);
 const rail=mesh(new T.TorusGeometry(1.75,.04,10,80),brass,scene,0,.36,0);rail.rotation.x=Math.PI/2;
 const tableProps=createTableProps();scene.add(tableProps);const roomDecorStart=scene.children.length;
-function textPanel(text,w,h,bg='#17392e',fg='#d9c290',size=70){const c=document.createElement('canvas');c.width=1024;c.height=512;const g=c.getContext('2d');g.fillStyle=bg;g.fillRect(0,0,1024,512);g.strokeStyle=fg;g.lineWidth=5;g.strokeRect(22,22,980,468);g.textAlign='center';g.textBaseline='middle';g.fillStyle=fg;g.font=`${size}px Georgia`;text.split('\n').forEach((s,i,a)=>g.fillText(s,512,256+(i-(a.length-1)/2)*100));const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:t}))}
-const sign=textPanel('THE BITTER RADISH\nSOCIAL CLUB',5.4,2.7);sign.position.set(-3.8,4.4,-9.78);
-box(4.2,2.5,.15,brass,scene,5,4.3,-9.77);
-const shipMap=textureLoader.load('./assets/ship-painting.jpg');shipMap.colorSpace=T.SRGBColorSpace;
-mesh(new T.PlaneGeometry(3.95,2.25),new T.MeshStandardMaterial({map:shipMap,roughness:.9}),scene,5,4.3,-9.67);
 // A paneled oak bar with a polished bullnose, brass rail, and upholstered stools.
 const barTop=new T.MeshPhysicalMaterial({map:plywoodMap,bumpMap:plywoodMap,bumpScale:.004,color:'#4c2c1c',roughness:.25,clearcoat:.8,clearcoatRoughness:.2});
 box(4.6,1.8,1.2,timber,scene,-8,.9,-5.2);box(4.98,.16,1.52,barTop,scene,-8,1.91,-5.2);
@@ -77,8 +63,8 @@ function bottle(parent,x,y,z,index){const g=new T.Group();parent.add(g);g.positi
 }
 for(let row=0;row<3;row++){const y=2.35+row*.85;box(4.8,.12,.76,barTop,scene,-8,y,-9.18);box(4.8,.035,.045,brass,scene,-8,y+.075,-8.79);for(let i=0;i<9;i++)bottle(scene,-9.94+i*.48,y+.07,-8.98,row*9+i)}
 const backlight=new T.PointLight('#ffc178',13,7,2);backlight.position.set(-8,3.3,-8.1);scene.add(backlight);
-function leatherMap(){const c=document.createElement('canvas');c.width=256;c.height=256;const g=c.getContext('2d');g.fillStyle='#6b7561';g.fillRect(0,0,256,256);let seed=43;for(let i=0;i<16000;i++){seed=seed*16807%2147483647;const x=seed%256;seed=seed*16807%2147483647;const y=seed%256;g.fillStyle=i%2?'#15231935':'#c5c7a01a';g.fillRect(x,y,1,1)}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t}
-const leatherTexture=leatherMap(),leather=new T.MeshPhysicalMaterial({map:leatherTexture,bumpMap:leatherTexture,bumpScale:.006,color:'#263d2d',roughness:.45,clearcoat:.12});
+function leatherMap(){const c=document.createElement('canvas');c.width=256;c.height=256;const g=c.getContext('2d');g.fillStyle='#692f36';g.fillRect(0,0,256,256);let seed=43;for(let i=0;i<16000;i++){seed=seed*16807%2147483647;const x=seed%256;seed=seed*16807%2147483647;const y=seed%256;g.fillStyle=i%2?'#15231935':'#c5c7a01a';g.fillRect(x,y,1,1)}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t}
+const leatherTexture=leatherMap(),leather=new T.MeshPhysicalMaterial({map:leatherTexture,bumpMap:leatherTexture,bumpScale:.006,color:'#682b33',roughness:.45,clearcoat:.12});
 function strut(a,b,r,material,parent){const from=new T.Vector3(...a),to=new T.Vector3(...b),delta=to.clone().sub(from);const m=cylinder(r,r,delta.length(),material,parent);m.position.copy(from.add(to).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());return m}
 for(const x of [-9.45,-8,-6.55]){const stool=new T.Group();scene.add(stool);stool.position.set(x,0,-3.65);
  cylinder(.37,.38,.12,timber,stool,0,1.13,0);cylinder(.365,.38,.14,leather,stool,0,1.24,0);
