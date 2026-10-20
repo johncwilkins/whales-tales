@@ -37,7 +37,10 @@ export function updateFunnelVisit(r,time){
  const s=(time-r.start)/1000,a=r.actor.avatar;
  r.group.visible=true;for(const original of r.originals)original.avatar.visible=false;
  // Appear in place on the tabletop for the whole routine; no entrance or exit.
- a.position.copy(r.top);a.lookAt(r.target.group.position.x,a.position.y,r.target.group.position.z);a.rotation.z=Math.sin(s*2)*.012;
+ a.position.copy(r.top);
+ // Set yaw explicitly: changing roll after lookAt can invert actors facing -Z.
+ const yaw=Math.atan2(r.target.group.position.x-a.position.x,r.target.group.position.z-a.position.z);
+ a.rotation.set(0,yaw,Math.sin(s*2)*.012);
  for(const leg of r.legs)leg.rotation.x=0;
  r.funnel.visible=r.hose.visible=true;
  const hold=new T.Vector3(.38,1.72,.4);a.localToWorld(hold);r.funnel.position.copy(hold);r.funnel.position.y+=.07;
