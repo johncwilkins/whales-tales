@@ -134,13 +134,20 @@ function createAvatar(character,i){
  if(isBrodeur){hairTop.visible=false;const beard=mesh(new T.SphereGeometry(.16,18,12),hair,head,0,-.185,.16);beard.scale.set(.82,.8,.62);const chin=mesh(new T.SphereGeometry(.115,16,10),mat('#9a978e'),head,0,-.245,.2);chin.scale.set(.78,.53,.4);for(const side of [-1,1]){const moustache=box(.083,.026,.025,hair,head,side*.045,-.095,.268);moustache.rotation.z=side*.17;const collar=box(.14,.14,.022,shirt,avatar,side*.075,1.64,.25);collar.rotation.z=side*.4;}const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#e8e3d7';ctx.fillRect(0,0,128,128);for(let k=0;k<128;k+=32){ctx.fillStyle='#35537899';ctx.fillRect(k,0,12,128);ctx.fillRect(0,k,128,12);ctx.fillStyle='#ad344acc';ctx.fillRect(k+18,0,5,128);ctx.fillRect(0,k+18,128,5);}shirt.map=new T.CanvasTexture(c);shirt.map.colorSpace=T.SRGBColorSpace;for(let k=0;k<5;k++)sphere(.013,mat('#ece8da'),avatar,0,1.55-k*.09,.27);}
  if(isKomar){hairTop.position.set(0,.2,-.04);hairTop.scale.set(.94,.4,.87);for(const side of [-1,1]){const frame=mat('#3b3028',.4);const lens=new T.MeshPhysicalMaterial({color:'#c3c4b1',transparent:true,opacity:.15,roughness:.12});for(const y of [-.018,.098])box(.195,.018,.022,frame,head,side*.112,y,.286);for(const x of [-.095,.095])box(.018,.12,.022,frame,head,side*.112+x,.04,.286);box(.17,.09,.012,lens,head,side*.112,.04,.29);box(.018,.02,.19,frame,head,side*.217,.05,.19);const collar=box(.14,.14,.022,shirt,avatar,side*.075,1.64,.25);collar.rotation.z=side*.4;box(.19,.085,.14,mat('#eee5cf'),avatar,side*.36,1.57,.34);}box(.05,.02,.023,black,head,0,.055,.291);box(.017,.48,.025,mat('#b8ad91'),avatar,0,1.36,.26);for(let j=0;j<5;j++)sphere(.012,mat('#f2eddf'),avatar,0,1.55-j*.09,.281);}
  if(isCindy){
-  hairTop.position.set(0,.15,-.075);hairTop.scale.set(1.06,.84,1.04);
-  for(const side of [-1,1])for(let k=0;k<5;k++){
-   const x=side*(.21+k*.023),z=-.085+k*.034;
-   const curve=new T.CatmullRomCurve3([new T.Vector3(x*.7,.23,z-.03),new T.Vector3(x+side*.035,.07,z+.025),new T.Vector3(x-side*.025,-.12,z),new T.Vector3(x+side*.045,-.31,z-.015),new T.Vector3(x+side*.015,-.47+(k%2)*.06,z+.03)]);
-   const lock=mesh(new T.TubeGeometry(curve,16,.047,8,false),k%2?hair:mat('#49302b'),head);lock.scale.z=.85;
+  hairTop.position.set(-.025,.17,-.075);hairTop.scale.set(1.2,.82,1.1);
+  const chestnut=mat('#49352f');
+  // A continuous, softly layered bob: broad back volume and swept side sections.
+  const back=sphere(.32,hair,head,0,-.11,-.16);back.name='Full shoulder-length hair';back.scale.set(1.24,1.47,.76);
+  for(const side of [-1,1]){
+   const sideVolume=sphere(.23,side<0?hair:chestnut,head,side*.26,-.13,-.015);sideVolume.scale.set(.66,1.65,.95);sideVolume.rotation.z=-side*.12;
+   for(let k=0;k<4;k++){
+    const x=side*(.23+k*.025),z=-.17+k*.075;
+    const curve=new T.CatmullRomCurve3([new T.Vector3(x*.7,.24,z-.015),new T.Vector3(x+side*.05,.07,z+.015),new T.Vector3(x+side*.045,-.16,z+.035),new T.Vector3(x+side*.015,-.35,z+.02),new T.Vector3(x-side*.015,-.45+(k%2)*.035,z-.005)]);
+    const layer=mesh(new T.TubeGeometry(curve,16,.065,8,false),k%3?hair:chestnut,head);layer.name='Soft swept hair layer';
+   }
   }
-  const fringe=sphere(.2,hair,head,-.085,.235,.075);fringe.scale.set(1,.4,.55);fringe.rotation.z=.2;
+  const sweep=sphere(.245,hair,head,-.085,.225,.075);sweep.scale.set(1.05,.4,.66);sweep.rotation.z=.18;
+  const fringe=sphere(.19,chestnut,head,.12,.215,.075);fringe.scale.set(.85,.35,.62);fringe.rotation.z=-.26;
   for(const side of [-1,1])mesh(new T.TorusGeometry(.055,.009,8,24),brass,head,side*.247,-.135,.105);
  }
 
@@ -246,7 +253,7 @@ let nextHairFireRound=2;
 export function roundVisuals(round){if(round<nextHairFireRound)return;const actor=people.find(p=>p.characterId==='martens'&&!p.away)||pongActors.find(p=>p.avatar.userData.characterId==='martens');if(actor&&startHairFire(actor.head,performance.now()))nextHairFireRound=round+4+Math.floor(Math.random()*4);}
 export function previewSignatureMoves(){const now=performance.now();let n=runSignatureMoves([...people,...pongActors],now);for(const p of people){if(p.characterId!=='bvn'||p.away)continue;const target=people.find(q=>q!==p&&!q.away);if(target&&!beerThrows.some(r=>r.thrower===p)){beerThrows.push(createBeerThrow(scene,p,target,now));n++;}}return n;}
 export function previewSanta(withElf=false){if(performance.now()<santaDance.until)return null;placeSantaDance(santaDance,onCruiser,tubbyCDs);return startSantaDance(santaDance,performance.now(),withElf);}
-export function previewFunnel(){const now=performance.now();if(now<christmasTree.until)return null;return startFunnelVisit(funnelVisit,now,people,{doors:christmasTree.doors,cabinDoor:cruiser.cabinDoor,onCruiser,originals:[...people,...pongActors,...(backgroundSmoker?[backgroundSmoker]:[])]});}
+export function previewFunnel({force=false}={}){const now=performance.now();if(now<christmasTree.until){if(!force)return null;clearTreeCrew(christmasTree);}return startFunnelVisit(funnelVisit,now,people,{force,doors:christmasTree.doors,cabinDoor:cruiser.cabinDoor,onCruiser,originals:[...people,...pongActors,...(backgroundSmoker?[backgroundSmoker]:[])]});}
 export function previewChristmasTree(){if(onCruiser||performance.now()<funnelVisit.until)return null;const ids=chooseTreeCrew(people.map(p=>p.characterId),[...pongActors.map(p=>p.avatar.userData.characterId),backgroundSmoker?.avatar.userData.characterId]);return startChristmasTree(christmasTree,performance.now(),ids,(id,i)=>createAvatar(CHARACTERS[id],i+40),onCruiser);}
 export function previewAirTed(){startAirTed(airTed,performance.now());}
 export function previewStickDance(){const now=performance.now();for(const p of [...people,...pongActors]){if(p.away)continue;startDance(p.danceRig,now);if(p.companionDance)startDance(p.companionDance,now);}return 5000;}

@@ -19,8 +19,8 @@ export function cancelFunnelVisit(r){
  for(const original of r.originals)original.avatar.visible=!original.away;
  r.originals=[];r.target=null;r.until=0;r.start=-Infinity;r.group.visible=false;setDoor(r,0);
 }
-export function startFunnelVisit(r,time,people,{doors,cabinDoor,onCruiser=false,originals=[],random=Math.random}={}){
- if(time<r.until)return null;
+export function startFunnelVisit(r,time,people,{doors,cabinDoor,onCruiser=false,originals=[],random=Math.random,force=false}={}){
+ if(time<r.until&&!force)return null;
  const eligible=people.filter(p=>!p.away&&p.characterId!=='carson');if(!eligible.length)return null;
  cancelFunnelVisit(r);r.target=eligible[Math.min(eligible.length-1,Math.floor(random()*eligible.length))];r.cupVisible=r.target.beerCup.visible;
  r.originals=originals.filter(p=>(p.characterId||p.avatar.userData.characterId)==='carson');r.doors=doors;r.cabinDoor=cabinDoor;r.onCruiser=onCruiser;
@@ -34,7 +34,10 @@ export function startFunnelVisit(r,time,people,{doors,cabinDoor,onCruiser=false,
  updateFunnelVisit(r,time);return {duration:r.duration,target:r.target.name};
 }
 export function updateFunnelVisit(r,time){
- if(time>=r.until||time<r.start){if(r.target)cancelFunnelVisit(r);return false;}
+ if(!r.target)return false;
+ if(time>=r.until){cancelFunnelVisit(r);return false;}
+ // requestAnimationFrame timestamps can precede the key event in the same frame.
+ time=Math.max(time,r.start);
  if(r.target.away){cancelFunnelVisit(r);return false;}
  const s=(time-r.start)/1000,a=r.actor.avatar;
  r.group.visible=true;for(const original of r.originals)original.avatar.visible=false;
