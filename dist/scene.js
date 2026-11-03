@@ -53,7 +53,7 @@ for(const y of [.15,1.71])box(4.72,.12,.16,timber,scene,-8,y,-4.5);
 // Keep the souvenir sticker within one recessed bar door, clear of the millwork.
 const ervsMap=textureLoader.load('./assets/ervs-byo.png');ervsMap.colorSpace=T.SRGBColorSpace;
 const ervsSticker=mesh(new T.PlaneGeometry(.7,.399),new T.MeshStandardMaterial({map:ervsMap,color:'#e8dfc9',roughness:1,transparent:true,opacity:.94,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}),scene,-7.44,.94,-4.493);
-ervsSticker.name='Erv’s B.Y.O. bar sticker';ervsSticker.rotation.set(0,0,-.14);
+ervsSticker.name='Erv’s B.Y.O. bar sticker';ervsSticker.rotation.set(0,0,.14);
 // A modest vintage beer poster in the clear wall bay beyond the right window.
 const beerPosterMap=textureLoader.load('./assets/st-pauli-girl.png');beerPosterMap.colorSpace=T.SRGBColorSpace;
 const beerPoster=mesh(new T.PlaneGeometry(1.05,1.632),new T.MeshStandardMaterial({map:beerPosterMap,color:'#d8cdb5',roughness:1}),clubRoom.group,9.65,4.12,-9.885);
@@ -63,23 +63,33 @@ const barFoot=cylinder(.035,.035,4.55,brass,scene,-8,.34,-4.1);barFoot.rotation.
 for(const x of [-10,-8,-6]){const support=cylinder(.022,.022,.44,brass,scene,x,.34,-4.33);support.rotation.x=Math.PI/2}
 function labelMap(title,cream,ink){const c=document.createElement('canvas');c.width=256;c.height=256;const g=c.getContext('2d');g.fillStyle=cream;g.fillRect(0,0,256,256);g.strokeStyle=ink;g.lineWidth=5;g.strokeRect(12,12,232,232);g.strokeRect(19,19,218,218);g.fillStyle=ink;g.textAlign='center';g.font='20px Georgia';g.fillText('BITTER RADISH',128,48);g.font='bold 34px Georgia';title.split(' ').forEach((word,j,all)=>g.fillText(word,128,115+j*38-(all.length-1)*15));g.font='15px Georgia';g.fillText('SMALL BATCH · No. 9',128,214);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t}
 const labelsForBottles=[labelMap('HOUSE GIN','#d9d1b0','#20352c'),labelMap('RADISH RYE','#d8b77d','#442c1c'),labelMap('PORT LIGHT','#7c3028','#eee0bc'),labelMap('SALT OAK','#ded6be','#2b3c43')];
-const tanquerayLabel=(()=>{const c=document.createElement('canvas');c.width=512;c.height=384;const ctx=c.getContext('2d');ctx.fillStyle='#eee9d8';ctx.fillRect(0,0,512,384);ctx.strokeStyle='#234a36';ctx.lineWidth=8;ctx.strokeRect(12,12,488,360);ctx.textAlign='center';ctx.fillStyle='#254e36';ctx.font='italic bold 67px Georgia';ctx.fillText('Tanqueray',256,154);ctx.font='bold 25px Georgia';ctx.fillText('LONDON DRY GIN',256,207);ctx.font='21px Georgia';ctx.fillText('DISTILLED FOUR TIMES',256,252);ctx.fillStyle='#a3312d';ctx.beginPath();ctx.arc(256,311,30,0,Math.PI*2);ctx.fill();ctx.fillStyle='#eee9d8';ctx.font='bold 24px Georgia';ctx.fillText('T',256,320);const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;return map;})();
+const tanquerayLabel=(()=>{const c=document.createElement('canvas');c.width=512;c.height=384;const ctx=c.getContext('2d');ctx.fillStyle='#eee9d8';ctx.fillRect(0,0,512,384);ctx.strokeStyle='#234a36';ctx.lineWidth=8;ctx.strokeRect(12,12,488,360);ctx.textAlign='center';ctx.fillStyle='#254e36';ctx.font='italic bold 67px Georgia';ctx.fillText('Tanqueray',256,154);ctx.font='bold 25px Georgia';ctx.fillText('LONDON DRY GIN',256,207);ctx.fillStyle='#a3312d';ctx.font='bold 23px Georgia';ctx.fillText('IMPORTED',256,251);ctx.fillStyle='#254e36';ctx.font='20px Georgia';ctx.fillText('DISTILLED FOUR TIMES',256,311);const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;return map;})();
 const tanquerayCap=mat('#b7bfaa',.3,.35),tanqueraySeal=mat('#a73531',.5),barBottles=[];
+function createTanquerayStamp(parent){
+ const stamp=new T.Group();stamp.name='Tanqueray red authenticity stamp';stamp.position.set(0,.447,.119);parent.add(stamp);
+ const wax=mesh(new T.CircleGeometry(.047,32),tanqueraySeal,stamp);wax.name='Red wax seal';
+ const raisedWax=sphere(.043,tanqueraySeal,stamp,0,0,.002);raisedWax.scale.z=.16;
+ const rim=mesh(new T.TorusGeometry(.037,.003,6,32),mat('#c54838',.6),stamp,0,0,.009);
+ const crest=mesh(new T.TorusGeometry(.024,.002,6,24),mat('#7c191b',.7),stamp,0,0,.01);
+ box(.004,.029,.003,tanqueraySeal,stamp,0,-.002,.012);box(.021,.004,.003,tanqueraySeal,stamp,0,.012,.012);
+ stamp.visible=false;return stamp;
+}
 function bottle(parent,x,y,z,index){const g=new T.Group();parent.add(g);g.position.set(x,y,z);const k=.82+(index%4)*.12;g.scale.setScalar(k);g.rotation.y=(index%3-1)*.12;
  const profile=[[0,0],[.1,0],[.122,.025],[.122,.38],[.115,.43],[.052,.51],[.046,.64],[.055,.65],[.055,.69],[0,.69]].map(([r,y])=>new T.Vector2(r,y));
  const glass=new T.MeshPhysicalMaterial({color:['#254d2b','#9d5f24','#476753','#663f22'][index%4],roughness:.12,metalness:.04,transparent:true,opacity:.85,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.6});mesh(new T.LatheGeometry(profile,24),glass,g);
  const cap=cylinder(.038,.038,.07,index%3===0?brass:mat('#202622',.4),g,0,.69,0),liquid=cylinder(.1,.1,.28,mat(index%2?'#9e6122':'#415535',.22),g,0,.16,0);
  const label=mesh(new T.CylinderGeometry(.124,.124,.23,24,1,true,-.88,1.76),new T.MeshStandardMaterial({map:labelsForBottles[index%4],roughness:.7,side:T.DoubleSide}),g,0,.26,0);
  const seal=cylinder(.049,.049,.045,brass,g,0,.58,0);
- barBottles.push({group:g,glass,cap,liquid,label,seal,scale:k,original:{glass:glass.color.clone(),cap:cap.material,liquid:liquid.material.color.clone(),label:label.material.map}});
+ const stamp=createTanquerayStamp(g);
+ barBottles.push({group:g,glass,cap,liquid,label,seal,stamp,scale:k,original:{glass:glass.color.clone(),cap:cap.material,liquid:liquid.material.color.clone(),label:label.material.map}});
 }
 for(let row=0;row<3;row++){const y=2.35+row*.85;box(4.8,.12,.76,barTop,scene,-8,y,-9.18);box(4.8,.035,.045,brass,scene,-8,y+.075,-8.79);for(let i=0;i<9;i++)bottle(scene,-9.94+i*.48,y+.07,-8.98,row*9+i)}
 function refreshCastDecor(){
  const ids=new Set([...people.map(p=>p.characterId),...pongActors.map(p=>p.avatar.userData.characterId)]);
  // One of 26 named players across the table and pong cast: about 31–38% of full casts.
- beerPoster.visible=ids.has('brodeur');
+ beerPoster.visible=ids.has('bell');
  const gin=ids.has('tubby')||ids.has('rose');
- for(const b of barBottles){b.group.name=gin?'Tanqueray London Dry Gin bottle':'House bar bottle';b.group.scale.set(gin?1.1:b.scale,gin?.94:b.scale,gin?1.1:b.scale);b.glass.color.copy(gin?new T.Color('#147343'):b.original.glass);b.cap.material=gin?tanquerayCap:b.original.cap;b.liquid.material.color.copy(gin?new T.Color('#76a17b'):b.original.liquid);b.label.material.map=gin?tanquerayLabel:b.original.label;b.label.material.needsUpdate=true;b.seal.material=gin?tanqueraySeal:brass;}
+ for(const b of barBottles){b.group.name=gin?'Tanqueray London Dry Gin bottle':'House bar bottle';b.group.scale.set(gin?1.1:b.scale,gin?.94:b.scale,gin?1.1:b.scale);b.glass.color.copy(gin?new T.Color('#147343'):b.original.glass);b.cap.material=gin?tanquerayCap:b.original.cap;b.liquid.material.color.copy(gin?new T.Color('#76a17b'):b.original.liquid);b.label.material.map=gin?tanquerayLabel:b.original.label;b.label.material.needsUpdate=true;b.seal.visible=!gin;b.stamp.visible=gin;}
 }
 const backlight=new T.PointLight('#ffc178',13,7,2);backlight.position.set(-8,3.3,-8.1);scene.add(backlight);
 function leatherMap(){const c=document.createElement('canvas');c.width=256;c.height=256;const g=c.getContext('2d');g.fillStyle='#692f36';g.fillRect(0,0,256,256);let seed=43;for(let i=0;i<16000;i++){seed=seed*16807%2147483647;const x=seed%256;seed=seed*16807%2147483647;const y=seed%256;g.fillStyle=i%2?'#15231935':'#c5c7a01a';g.fillRect(x,y,1,1)}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t}
