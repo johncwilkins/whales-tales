@@ -25,6 +25,7 @@ export function createCruiser(){
 export function createTube(parent,avatar,index){const group=new T.Group();group.name='Inner-tube swimmer';parent.add(group);group.position.set(index?6.8:-6.8,-.45,-2.7-index*2);group.rotation.y=index?-.7:.7;avatar.removeFromParent();avatar.position.set(0,-.76,0);avatar.rotation.set(0,0,0);group.add(avatar);const tube=part(group,new T.TorusGeometry(.64,.22,12,32),index?'#e5ae47':'#498da6',0,.22,0);tube.rotation.x=Math.PI/2;return {group,avatar};}
 export const AIR_TED_MESSAGES=Object.freeze([
  'Bag Chew',
+ 'Boxcar — Supporting the arts, one dollar at a time.',
  'Mosquito Grill - draughts 50% off tonight',
  'Seafood Newburgh',
  'Send Me',
@@ -47,8 +48,8 @@ function paintAirTedBanner(r,message){
  const ctx=r.bannerCanvas.getContext('2d'),w=r.bannerCanvas.width,h=r.bannerCanvas.height;
  ctx.fillStyle='#fff2c8';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#b32a2e';ctx.lineWidth=10;ctx.strokeRect(12,12,w-24,h-24);
  ctx.fillStyle='#a3282d';ctx.textAlign='center';ctx.textBaseline='middle';
- const lines=message==='Mosquito Grill - draughts 50% off tonight'?['Mosquito Grill','draughts 50% off tonight']:message==='CHT Kamakazis 50 cents off tonight'?['CHT Kamakazis','50 cents off tonight']:message.length>30?[message.split(' ').slice(0,3).join(' '),message.split(' ').slice(3).join(' ')]:[message];
- ctx.font='bold '+(lines.length===1?136:92)+'px sans-serif';for(const [i,line] of lines.entries())ctx.fillText(line,w/2,h/2+(i-(lines.length-1)/2)*106,w-90);
+ const lines=message==='Boxcar — Supporting the arts, one dollar at a time.'?['Boxcar','Supporting the arts,','one dollar at a time.']:message==='Mosquito Grill - draughts 50% off tonight'?['Mosquito Grill','draughts 50% off tonight']:message==='CHT Kamakazis 50 cents off tonight'?['CHT Kamakazis','50 cents off tonight']:message.length>30?[message.split(' ').slice(0,3).join(' '),message.split(' ').slice(3).join(' ')]:[message];
+ ctx.font='bold '+(lines.length===1?136:lines.length===3?76:92)+'px sans-serif';for(const [i,line] of lines.entries())ctx.fillText(line,w/2,h/2+(i-(lines.length-1)/2)*(lines.length===3?82:106),w-90);
  r.banner.material.map.needsUpdate=true;r.message=message;r.banner.userData.message=message;
 }
 function airTedLivery(group){
