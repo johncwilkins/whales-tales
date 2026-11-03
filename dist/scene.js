@@ -50,10 +50,10 @@ box(4.6,1.8,1.2,timber,scene,-8,.9,-5.2);box(4.98,.16,1.52,barTop,scene,-8,1.91,
 const bullnose=cylinder(.085,.085,4.98,barTop,scene,-8,1.91,-4.44);bullnose.rotation.z=Math.PI/2;
 for(let i=0;i<4;i++){const x=-9.68+i*1.12;box(1.0,1.34,.055,darkWood,scene,x,.94,-4.575);box(.86,1.17,.06,panelMaterial(i+90),scene,x,.94,-4.53);for(const y of [.31,1.57])box(1.02,.06,.07,timber,scene,x,y,-4.48)}
 for(const y of [.15,1.71])box(4.72,.12,.16,timber,scene,-8,y,-4.5);
-// A small, weathered souvenir sticker on the inner end of the back bar.
+// A weathered souvenir sticker facing the room on the front of the bar.
 const ervsMap=textureLoader.load('./assets/ervs-byo.png');ervsMap.colorSpace=T.SRGBColorSpace;
-const ervsSticker=mesh(new T.PlaneGeometry(.78,.445),new T.MeshStandardMaterial({map:ervsMap,color:'#d5cdbb',roughness:1,transparent:true,opacity:.76,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}),scene,-5.686,1.28,-5.12);
-ervsSticker.name='Erv’s B.Y.O. bar sticker';ervsSticker.rotation.set(0,Math.PI/2,-.09);
+const ervsSticker=mesh(new T.PlaneGeometry(1.45,.827),new T.MeshStandardMaterial({map:ervsMap,color:'#e8dfc9',roughness:1,transparent:true,opacity:.94,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}),scene,-7.6,1.02,-4.435);
+ervsSticker.name='Erv’s B.Y.O. bar sticker';ervsSticker.rotation.set(0,0,-.055);
 
 const barFoot=cylinder(.035,.035,4.55,brass,scene,-8,.34,-4.1);barFoot.rotation.z=Math.PI/2;
 for(const x of [-10,-8,-6]){const support=cylinder(.022,.022,.44,brass,scene,x,.34,-4.33);support.rotation.x=Math.PI/2}
