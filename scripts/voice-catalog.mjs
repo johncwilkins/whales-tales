@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import {CHATTER,TUBBY_CHATTER} from '../dist/chatter.mjs';
+import {modeAnnouncement,MODES} from '../dist/modes.mjs';
+import {CHARACTERS,HOUSE_NAMES} from '../dist/roster.mjs';
+const source=fs.readFileSync('dist/callouts.mjs','utf8');
+const pools=new Function(source.slice(0,source.indexOf('const recent='))+';return [...mexican,...ordinary,...peep,...silence,...quick,...slow,...wrong,...flag,...chug]')();
+const game=fs.readFileSync('dist/game.js','utf8');
+const reasons=new Function('return '+game.match(/const goldenReasons=(\[[^\n]+?\]);/)[1])();
+const voluntary=new Function('return '+game.match(/const lines=(\['Flags on me![^\n]+?\]);/)[1])();
+const phrases=new Set(['Nay!','Who?','Chug!','Mexican!',...Array.from({length:18},(_,i)=>String(i+1)),...pools,...CHATTER.flat(),...TUBBY_CHATTER.flat(),...reasons.map(r=>'Golden chair! '+r),...voluntary,'Back! Golden chair’s closed.','For God’s sake, get his number! He volunteered!','Whale’s Tales. Nay. Who? For God’s sake, get his number!',"I’ll start. Whale’s Tales. Prince of Wales calls tales on…"]);
+for(const id of Object.keys(MODES))for(let n=2;n<=9;n++)phrases.add('I’ll start. '+modeAnnouncement(id,n));
+for(const name of new Set(['You',...HOUSE_NAMES,...Object.values(CHARACTERS).map(c=>c.name)]))phrases.add(name+'!');
+const normalize=s=>s.normalize('NFKC').replace(/[‘’]/g,"'").replace(/…/g,'...').replace(/\s+/g,' ').trim();
+const lines=[...phrases].map((text,i)=>({id:'p'+String(i).padStart(3,'0'),text,key:normalize(text)}));
+fs.writeFileSync('/tmp/wales-voice-catalog.json',JSON.stringify({voices:['cedar','ash','onyx','echo'],lines},null,2));
+console.log(lines.length+' phrases; '+lines.length*4+' clips');
