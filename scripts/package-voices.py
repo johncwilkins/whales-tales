@@ -6,13 +6,16 @@ for filename in {f for entries in manifest.values() for f in entries.values()}:
  p=raw/filename
  duration=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',str(p)],stderr=subprocess.DEVNULL))
  durations[filename]=duration
-# Isolated one-word takes occasionally run long; reuse a clean take of that same word.
-for text,entries in manifest.items():
- if text.isdigit() or text in ('Nay!','Who?','Chug!','Mexican!'):
-  valid=[f for f in entries.values() if .15<durations[f]<2.5]
-  if not valid:raise RuntimeError('No clean core take: '+text)
-  for voice,f in entries.items():
-   if not .15<durations[f]<2.5:shutil.copyfile(raw/valid[0],raw/f);durations[f]=durations[valid[0]]
+# Reject empty or overlong takes before packing; a clean alternate take keeps the phrase usable.
+for text,entries in list(manifest.items()):
+ core=text.isdigit() or text in ('Nay!','Who?','Chug!','Mexican!')
+ maximum=2.5 if core else max(4,len(text.split())*.8+2)
+ valid=[f for f in entries.values() if .15<durations[f]<maximum]
+ if not valid:
+  if core:raise RuntimeError('No clean core take: '+text)
+  del manifest[text];print('Device fallback reserved for:',text);continue
+ for voice,f in entries.items():
+  if not .15<durations[f]<maximum:shutil.copyfile(raw/valid[0],raw/f);durations[f]=durations[valid[0]]
 lookup={}
 for voice in ['cedar','ash','onyx','echo']:
  files=[entries[voice] for entries in manifest.values() if voice in entries]
