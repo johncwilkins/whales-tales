@@ -1,5 +1,6 @@
 import {CHARACTERS,seatCast,HOUSE_NAMES,assignCharacter} from './roster.mjs';
 import {SpeechChannel} from './speech.mjs';
+import {RecordedSpeechChannel} from './recorded-voices.mjs';
 import {rankVoices,selectVoice} from './voices.mjs';
 import {chatterGap,chooseChatter} from './chatter.mjs';
 import {responseDelay} from './timing.mjs';
@@ -25,9 +26,9 @@ let mistakeEvents=0;function reactToMistake(){if(++mistakeEvents%3===0)refereeSa
 let humanSince=null,quickPoints=0,pressure=null,pauseSnapshot=null,announcementState=null,introOpen=false,introRevision=0;
 function untilResumed(){return paused&&running?new Promise(resolve=>pauseWaiters.add(resolve)):Promise.resolve()}
 function releasePause(){for(const resolve of pauseWaiters)resolve();pauseWaiters.clear();}
-const speechChannel='speechSynthesis' in window?new SpeechChannel(speechSynthesis):null;
+const speechChannel=new RecordedSpeechChannel('speechSynthesis' in window?new SpeechChannel(speechSynthesis):null);
 const voices=()=>('speechSynthesis' in window?speechSynthesis.getVoices():[]);
-function refreshVoices(){const select=$('#voice'),chosen=desiredVoice;select.replaceChildren();const auto=document.createElement('option');auto.value='auto';auto.textContent=mobileDevice()?'Auto · clearest mobile voice':'Auto · best available';select.append(auto);for(const v of rankVoices(voices())){const option=document.createElement('option');option.value=v.voiceURI||v.name;option.textContent=v.name;select.append(option)}select.value=chosen;if(!select.value)select.value='auto'}
+function refreshVoices(){const select=$('#voice'),chosen=desiredVoice;select.replaceChildren();const auto=document.createElement('option');auto.value='auto';auto.textContent='Recorded pub voices · recommended';select.append(auto);for(const v of rankVoices(voices())){const option=document.createElement('option');option.value=v.voiceURI||v.name;option.textContent=v.name;select.append(option)}select.value=chosen;if(!select.value)select.value='auto'}
 refreshVoices();if('speechSynthesis' in window)speechSynthesis.addEventListener?.('voiceschanged',refreshVoices);
 
 const options={easy:{limit:9000,rate:1.35,botMiss:.025},normal:{limit:4500,rate:1.6,botMiss:.04},fast:{limit:3000,rate:1.85,botMiss:.055},blitz:{limit:1800,rate:2.1,botMiss:.07}};
@@ -73,7 +74,7 @@ async function say(i,text,myToken,{opening=false,ceremony=false,selfCall=false,o
  const duration=Math.max(150,text.length*55/rate);let began=false;const begin=()=>{if(began||myToken!==token||speechId!==speechSerial)return;began=true;activeSpeaker=i;showBubble(i,belch?'Buuurp!':text,duration+1800);$('#last').textContent=`${people[i].name}: “${belch?'Buuurp!':text}”`;onStart?.();};
  if(belch){if(muted){begin();await wait(570);}else{const length=await playBelch(begin);await wait(length);}}
  else if(muted||!speechChannel){begin();await wait(Math.min(duration,1200));}
- else{const voice=selectVoice(voices(),i,$('#voice').value||'auto',{single:mobileDevice()});await speechChannel.speak(text,{...(voice?{voice}:{}),rate,pitch:1,volume:1,onStart:begin,...(shortMobile?{maxDuration:mobileBudget,maxStartDelay:900}:{})});await untilResumed();if(myToken!==token||speechId!==speechSerial)return;begin();}
+ else{const voice=selectVoice(voices(),i,$('#voice').value||'auto',{single:mobileDevice()});await speechChannel.speak(text,{speakerId:people[i]?.characterId||'seat-'+i,recorded:($('#voice').value||'auto')==='auto',...(voice?{voice}:{}),rate,pitch:1,volume:1,onStart:begin,...(shortMobile?{maxDuration:mobileBudget,maxStartDelay:900}:{})});await untilResumed();if(myToken!==token||speechId!==speechSerial)return;begin();}
  await untilResumed();if(myToken===token&&speechId===speechSerial){activeSpeaker=-1;setTalking(-1);}
 }
 
@@ -224,7 +225,7 @@ async function respond(value,{belch=false}={}){if(selfGolden||!running||paused||
  advance(value);if(numberCall&&points&&state.actor!==0)pressure={seat:state.actor,extra:points*.1};const next=state;const speaking=say(0,phrase,myToken,{belch:belch&&value==='nay',selfCall:state.caller===state.target});
  if(state.actor===0){pump(myToken);return}
  updatePrompt();buttons();await speaking;if(myToken===token&&running&&!paused&&state===next)pump(myToken)}
-async function startRound(){pendingPeepers.clear();paidPeepers.clear();unlockSound();speechChannel?.resume();if(started)round++;started=true;stop();count=Number($('#players').value);if(people.length!==count){seatPlayers(count);away=selfGolden?0:-1;if(selfGolden)setAway(0,true);turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0}const opener=1;state={actor:opener,caller:opener,target:opener,phase:'number'};running=true;selectRoundMode();$('#welcome').hidden=true;$('#toast').hidden=true;stats();buttons();const myToken=token;status('THE ROUND IS STARTING',people[opener].name+' opens.',"Listen to the opening number. You’ll be prompted when it’s your turn.");setActive(opener);introOpen=false;await announceOpening(opener,"I’ll start. "+(modeId==='regular'?"Whale’s Tales. Prince of Wales calls tales on…":modeAnnouncement(modeId,count)),myToken)}
+async function startRound(){pendingPeepers.clear();paidPeepers.clear();unlockSound();speechChannel?.resume();speechChannel?.preload?.();if(started)round++;started=true;stop();count=Number($('#players').value);if(people.length!==count){seatPlayers(count);away=selfGolden?0:-1;if(selfGolden)setAway(0,true);turns=0;bathroomAt=3;lastLoser=-1;lossStreak=0}const opener=1;state={actor:opener,caller:opener,target:opener,phase:'number'};running=true;selectRoundMode();$('#welcome').hidden=true;$('#toast').hidden=true;stats();buttons();const myToken=token;status('THE ROUND IS STARTING',people[opener].name+' opens.',"Listen to the opening number. You’ll be prompted when it’s your turn.");setActive(opener);introOpen=false;await announceOpening(opener,"I’ll start. "+(modeId==='regular'?"Whale’s Tales. Prince of Wales calls tales on…":modeAnnouncement(modeId,count)),myToken)}
 
 function coverSpectator(){
  if(!selfGolden||state.phase==='restart')return;
@@ -275,7 +276,7 @@ function closeSettings(){speechChannel?.cancel();$('#configuration').close();if(
 $('#close-configuration').onclick=closeSettings;$('#configuration').addEventListener('cancel',e=>{e.preventDefault();closeSettings()});
 $('#table-toggle').onclick=()=>{const showing=document.body.classList.toggle('mobile-table');$('#table-toggle').textContent=showing?'Controls only':'Show table';$('#table-toggle').setAttribute('aria-pressed',String(showing));persistSettings();};
 
-$('#preview-voice').onclick=async()=>{if(muted||!speechChannel)return;unlockSound();speechChannel.resume();const voice=selectVoice(voices(),0,$('#voice').value||'auto',{single:true});await speechChannel.speak('Whale’s Tales. Nay. Who? For God’s sake, get his number!',{...(voice?{voice}:{}),rate:1,pitch:1,volume:1});};
+$('#preview-voice').onclick=async()=>{if(muted||!speechChannel)return;unlockSound();speechChannel.resume();const voice=selectVoice(voices(),0,$('#voice').value||'auto',{single:true});await speechChannel.speak('Whale’s Tales. Nay. Who? For God’s sake, get his number!',{recorded:($('#voice').value||'auto')==='auto',speakerId:'preview',...(voice?{voice}:{}),rate:1,pitch:1,volume:1});};
 
 $('#configuration').addEventListener('change',persistSettings);if(savedSettings.sound===false)setMuted(true);if(savedSettings.controlsOnly===true){document.body.classList.remove('mobile-table');$('#table-toggle').textContent='Show table';$('#table-toggle').setAttribute('aria-pressed','false');}
 
