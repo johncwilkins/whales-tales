@@ -26,7 +26,8 @@ export function createClubRoom(woodMap){
   for(const y of [.15,2.4,6.65,7.55]){if(y>TREE_DOORWAY.height)box(.24,.2,24,timber,group,x,y,2);else for(const [a,b] of [[-10,TREE_DOORWAY.z-TREE_DOORWAY.width/2],[TREE_DOORWAY.z+TREE_DOORWAY.width/2,14]])box(.24,y===2.4?.32:.18,b-a,timber,group,x,y,(a+b)/2);}
  }
  for(const x of [-11.6,-8.1,0,8.1,11.6])box(.26,5.25,.2,timber,group,x,4.95,-9.67);
- for(const z of [-9,-4,1,6])box(24,.28,.32,timber,group,0,7.65,z);
+ // Keep overhead beams behind the table so elevated portrait cameras have a clear sightline.
+ for(const z of [-9,-4])box(24,.28,.32,timber,group,0,7.65,z);
 
  const windows=[];
  function windowAt(x){
