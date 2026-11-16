@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+const nodes=[],clips={"Nay!":{cedar:{file:'core.mp3',offset:0,duration:.45}},'You!':{cedar:{file:'names.mp3',offset:2,duration:.4}},'Wrong turn!':{cedar:{file:'jokes.mp3',offset:4,duration:1.3}}};
+let pendingFetch=null;
+globalThis.fetch=async url=>String(url).endsWith('manifest.json')?{ok:true,json:async()=>clips}:pendingFetch?await pendingFetch:{ok:true,arrayBuffer:async()=>new ArrayBuffer(8)};
+globalThis.AudioContext=class{state='running';destination={};resume(){return Promise.resolve()}async decodeAudioData(){return {duration:10}}createGain(){return {gain:{},connect(){},disconnect(){}}}createBufferSource(){const n={playbackRate:{},connect(){},disconnect(){},start(...args){this.args=args},stop(){this.stopped=true;this.onended?.()}};nodes.push(n);return n}};
+const {RecordedSpeechChannel,unlockRecordedVoices,clipFiles,voiceForSpeaker}=await import('../dist/recorded-voices.mjs');
+assert.equal(voiceForSpeaker('tubby'),voiceForSpeaker('tubby'));assert.equal(clipFiles(clips,'You! Wrong turn!','ash').length,2);assert.equal(clipFiles(clips,'Missing','ash'),null);
+let native=0,began=0;const channel=new RecordedSpeechChannel({cancel(){},resume(){},async speak(t,o){native++;o.onStart?.()}});unlockRecordedVoices();
+const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve()};
+let done=false;const first=channel.speak('Nay!',{onStart(){began++},maxDuration:1}).then(()=>done=true);await flush();assert.equal(began,1);assert.equal(done,false);assert.deepEqual(nodes[0].args,[0,0,.45]);channel.cancel();await first;assert(nodes[0].stopped);assert.equal(done,true);assert.equal(native,0);
+await channel.speak('Unknown line',{onStart(){began++}});assert.equal(native,1);assert.equal(began,2);
+let release;pendingFetch=new Promise(r=>release=r);const late=channel.speak('You!',{onStart(){began++}});await flush();channel.cancel();await late;release({ok:true,arrayBuffer:async()=>new ArrayBuffer(8)});await flush();assert.equal(began,2);assert.equal(nodes.length,1);
+console.log('Passed: static voice selection, composed names, audible-start callback, full clip duration, fallback, active cancellation and cancelled-load suppression.');
